@@ -1,0 +1,19 @@
+[package]
+name = "files"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "debug", "as_ref", "from_str", "into_iterator"] }
+image = { version = "0.25.9", optional = true }
+serde = { version = "1.0.228", features = ["derive"], optional = true }
+serde_json = { version = "1.0.145", optional = true }
+serde_toml = { version = "0.0.1", optional = true }
+thiserror = "2.0.17"
+
+[features]
+default = []
+# default = ["serde"]
+
+serde = ["dep:serde", "dep:serde_json", "dep:serde_toml"]
+image = ["dep:image"]
