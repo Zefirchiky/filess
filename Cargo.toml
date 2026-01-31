@@ -2,6 +2,8 @@
 name = "files"
 version = "0.1.0"
 edition = "2024"
+description = "Simplified file management"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "debug", "as_ref", "from_str", "into_iterator"] }
