@@ -1,6 +1,8 @@
 use derive_more::{AsRef, Deref, DerefMut, From};
 
-use crate::{FileBase, FileTrait, ImageFileTrait};
+#[cfg(feature = "image")]
+use crate::ImageFileTrait;
+use crate::{FileBase, FileTrait};
 
 #[derive(Debug, Default, Clone, From, AsRef, Deref, DerefMut)]
 #[from(forward)]
