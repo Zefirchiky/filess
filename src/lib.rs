@@ -28,7 +28,7 @@ pub mod test_assets {
         path
     }
     
-    #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+    #[cfg_attr(feature = "serde", derive(Debug, serde::Serialize, serde::Deserialize, PartialEq))]
     pub struct User {
         pub name: String,
         pub age: usize,

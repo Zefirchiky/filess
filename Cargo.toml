@@ -19,8 +19,8 @@ tokio = { version = "1.49.0", default-features = false, features = ["fs", "parki
 tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
-# default = []
-default = ["serde", "image", "async"]
+default = []
+# default = ["serde", "image", "async"]
 
 serde = ["dep:serde", "dep:serde_json", "dep:serde_toml", "image?/serde"]
 image = ["dep:image"]
