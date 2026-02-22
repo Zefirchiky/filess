@@ -42,37 +42,38 @@ pub trait ImageFileAsync: ImageFile {
     }
 }
 
-pub trait ImageFileEncoding: FileTrait {
-    fn get_encoder_w_quality(w: impl Write, quality: u8) -> impl image::ImageEncoder;
+pub trait ImageQulityEncoding: FileTrait {
+    type Config: Sync + Send;
+    
+    fn get_encoder_w_quality(w: impl Write, config: Self::Config) -> impl image::ImageEncoder;
     
     /// Save image with custom quality.
     /// 
-    /// Use `save_image_custom_async` or `save_image_custom_async_offload` if this is too slow and `async`
-    /// feature is enabled.
+    /// Use `save_image_custom_async` or `save_image_custom_async_offload` if this is too slow and `async` feature is enabled.
     fn save_image_custom(
         &self,
         img: &image::DynamicImage,
-        quality: u8,
+        config: Self::Config,
     ) -> Result<(), ImageIoError> {
         let mut buf = vec![];
-        img.write_with_encoder(Self::get_encoder_w_quality(&mut buf, quality))?;
+        img.write_with_encoder(Self::get_encoder_w_quality(&mut buf, config))?;
         self.save(&buf)?;
         Ok(())
     }
 }
 
 #[cfg(feature = "async")]
-pub trait ImageFileEncodingAsync: ImageFileEncoding {
+pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
     /// Save image with custom quality.
     /// 
     /// Use `save_image_custom_async_offload` if this is too slow.
     async fn save_image_custom_async(
         &self,
         img: &image::DynamicImage,
-        quality: u8,
+        config: Self::Config,
     ) -> Result<(), ImageIoError> {
         let mut buf = vec![];
-        img.write_with_encoder(Self::get_encoder_w_quality(&mut buf, quality))?;
+        img.write_with_encoder(Self::get_encoder_w_quality(&mut buf, config))?;
         self.save_async(&buf).await?;
         Ok(())
     }
@@ -83,7 +84,7 @@ pub trait ImageFileEncodingAsync: ImageFileEncoding {
     async fn save_image_custom_async_offload<'a, F>(
         &'a self,
         img: &'a image::DynamicImage,
-        quality: u8,
+        config: Self::Config,
         offload: F,
     ) -> Result<(), ImageIoError> 
     where
@@ -92,7 +93,7 @@ pub trait ImageFileEncodingAsync: ImageFileEncoding {
         Self: Sync + Send,
     {
         (offload)(Box::new(move || {
-            self.save_image_custom(&img, quality)
+            self.save_image_custom(&img, config)
         })).await
     }
 }

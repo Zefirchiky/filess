@@ -1,10 +1,19 @@
 use derive_more::{AsRef, Deref, DerefMut, From};
 
 use crate::{FileBase, FileTrait};
+
 #[cfg(feature = "image")]
-use crate::{ImageFileEncoding, ImageFile};
-#[cfg(all(feature = "image", feature = "async"))]
-use crate::{ImageFileEncodingAsync, ImageFileAsync};
+#[derive(Debug, Clone, Copy)]
+pub struct JpegConfig {
+    quality: u8,
+}
+
+#[cfg(feature = "image")]
+impl JpegConfig {
+    pub fn new(quality: u8) -> Self {
+        Self { quality }
+    }
+}
 
 #[derive(Debug, Default, Clone, From, AsRef, Deref, DerefMut)]
 #[from(forward)]
@@ -27,24 +36,26 @@ impl FileTrait for Jpeg {
 }
 
 #[cfg(feature = "image")]
-impl ImageFile for Jpeg {
+impl crate::ImageFile for Jpeg {
     fn image_format() -> image::ImageFormat {
         image::ImageFormat::Jpeg
     }
 }
 
 #[cfg(all(feature = "image", feature = "async"))]
-impl ImageFileAsync for Jpeg {}
+impl crate::ImageFileAsync for Jpeg {}
 
 #[cfg(feature = "image")]
-impl ImageFileEncoding for Jpeg {
+impl crate::ImageQulityEncoding for Jpeg {
+    type Config = JpegConfig;
+    
     fn get_encoder_w_quality(
         w: impl std::io::Write,
-        quality: u8,
+        Self::Config { quality }: Self::Config,
     ) -> image::codecs::jpeg::JpegEncoder<impl std::io::Write> {
         image::codecs::jpeg::JpegEncoder::new_with_quality(w, quality)
     }
 }
 
 #[cfg(all(feature = "image", feature = "async"))]
-impl ImageFileEncodingAsync for Jpeg {}
+impl crate::ImageQualityEncodingAsync for Jpeg {}

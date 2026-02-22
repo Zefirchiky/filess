@@ -1,7 +1,5 @@
 use derive_more::{AsRef, Deref, DerefMut, From};
 
-#[cfg(feature = "image")]
-use crate::ImageFile;
 use crate::{FileBase, FileTrait};
 
 #[derive(Debug, Default, Clone, From, AsRef, Deref, DerefMut)]
@@ -25,8 +23,11 @@ impl FileTrait for WebP {
 }
 
 #[cfg(feature = "image")]
-impl ImageFile for WebP {
+impl crate::ImageFile for WebP {
     fn image_format() -> image::ImageFormat {
         image::ImageFormat::WebP
     }
 }
+
+#[cfg(all(feature = "image", feature = "async"))]
+impl crate::ImageFileAsync for WebP {}

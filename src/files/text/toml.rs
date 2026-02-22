@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{FileBase, FileTrait};
 #[cfg(feature = "serde")]
-use crate::{ModelFile, model_file::ModelIoError};
+use crate::{ModelFile};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ModelTomlIoError {
@@ -19,7 +19,7 @@ pub enum ModelTomlIoError {
 }
 
 #[cfg(feature = "serde")]
-impl ModelIoError for ModelTomlIoError {}
+impl crate::ModelIoError for ModelTomlIoError {}
 
 #[derive(Debug, Clone, Default, From, AsRef, Deref, DerefMut)]
 #[from(forward)]
