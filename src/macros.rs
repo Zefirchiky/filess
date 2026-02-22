@@ -5,6 +5,8 @@ macro_rules! define_file {
         [$($ext:expr),*],
         $($init_bytes:expr)?
     ) => {
+        use derive_more::{From, AsRef, Deref, DerefMut};
+        
         use crate::{FileBase, FileTrait};
         
         #[derive(Debug, Default, Clone, From, AsRef, Deref, DerefMut)]

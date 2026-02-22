@@ -1,5 +1,3 @@
-use derive_more::{AsRef, Deref, DerefMut, From};
-
 #[cfg(feature = "image")]
 use image::codecs::png::{CompressionType, FilterType};
 use crate::{define_custom_quality_image, define_file, define_image_file};
@@ -7,15 +5,8 @@ use crate::{define_custom_quality_image, define_file, define_image_file};
 #[cfg(feature = "image")]
 #[derive(Debug, Clone, Copy)]
 pub struct PngConfig {
-    compression: CompressionType,
-    filter: FilterType,
-}
-
-#[cfg(feature = "image")]
-impl PngConfig {
-    pub fn new(compression: CompressionType, filter: FilterType) -> Self {
-        Self { compression, filter }
-    }
+    pub compression: CompressionType,
+    pub filter: FilterType,
 }
 
 #[cfg(feature = "image")]

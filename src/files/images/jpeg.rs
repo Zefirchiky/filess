@@ -1,18 +1,10 @@
-use derive_more::{AsRef, Deref, DerefMut, From};
-
 use crate::{define_custom_quality_image, define_file, define_image_file};
 
 #[cfg(feature = "image")]
 #[derive(Debug, Clone, Copy)]
 pub struct JpegConfig {
-    quality: u8,
-}
-
-#[cfg(feature = "image")]
-impl JpegConfig {
-    pub fn new(quality: u8) -> Self {
-        Self { quality }
-    }
+    /// 1-10, 1 - worst, 100 - best. Default: 75
+    pub quality: u8,
 }
 
 #[cfg(feature = "image")]

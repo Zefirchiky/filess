@@ -1,5 +1,3 @@
-use derive_more::{AsRef, Deref, DerefMut, From};
-
 #[cfg(feature = "serde")]
 pub use crate::ModelFile;
 use crate::define_file;
