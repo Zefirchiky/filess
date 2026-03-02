@@ -6,7 +6,7 @@ Use `filess` as you would use String or Vec.
 
 Each file format is now a separate type, if your function needs json, you can put `filess::Json` as file type, enforcing the proper path.
 
-`Filess` simplifies saving and loading of data, with `serde` and `image` optional integration.
+`Filess` simplifies saving and loading of data, with `serde`, `image` and `symphonia` optional integration.
 
 ```rust
 let file1: Json = Json::new("path/to/file.json");   // Create new Json file. Filess will ensure that it's a valid path
@@ -31,12 +31,15 @@ Jpeg::new("another/path/image.jpeg").save_image_async(&image2).await?;
 
 | Feature      | Description
 |--------------|------------
-| `all-files`  | (Default) All currently supported files, includes `all-text` and `all-images`
+| `all-files`  | (Default) All currently supported files, includes `all-text`, `all-images` and `all-audio`
 | `all-text`   | All currently supported text files: `Json`, `Toml`, `Md`, `Txt`
 | `all-images` | All currently supported image files: `Jpeg`, `Png`, `WebP`, `Avif`, `Tiff`, `Gif`, `Bmp`, `Exr`, `Ff`, `Hdr`, `Ico`, `Pnm`, `Qoi`, `Tga`
+| `all-audio`  | All currently supported audio files: `Ogg`, `Mkv`, `Wav`, `Flac`, `Mp4`, `Mp3`, `Mp2`, `Mp1`, `Mpa`, `Alac`
 | `serde`      | `Serde` integration, adds `save_model` and `load_model` for `Json` and `Toml`
 | `image`      | `Image` integration, adds `save_image` and `load_image` to all image formats, and `save_image_custom` to formats where `image` supports custom quality
 | `image-nasm` | Turns on `nasm` feature of `image`
+| `audio`      | `Symphonia` integration, adds `load_audio` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
+| `symphonia-simd`| Turns on `opt-simd` feature of `symphonia`
 | `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `save_image_custom_async_offload` to offload image encoding
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it.
 

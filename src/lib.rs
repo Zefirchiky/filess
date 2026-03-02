@@ -1,5 +1,6 @@
 #![allow(refining_impl_trait, async_fn_in_trait)]
-mod macros;
+mod file_macros;
+mod util_macros;
 mod dir;
 mod file_base;
 mod temporary;
@@ -10,6 +11,8 @@ mod fs_handler;
 mod image_file;
 #[cfg(feature = "serde")]
 mod model_file;
+#[cfg(feature = "audio")]
+mod audio_file;
 
 pub use dir::Dir;
 pub use file_base::{FileBase, FileTrait};
@@ -21,6 +24,8 @@ pub use fs_handler::FsHandler;
 pub use image_file::*;
 #[cfg(feature = "serde")]
 pub use model_file::*;
+#[cfg(feature = "audio")]
+pub use audio_file::*;
 
 
 

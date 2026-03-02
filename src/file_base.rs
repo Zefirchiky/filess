@@ -47,6 +47,10 @@ impl<F: FileTrait> FileBase<F> {
         Self { path: file, _phantom: PhantomData }
     }
     
+    pub fn as_file(&self) -> std::io::Result<fs::File> {
+        fs::File::create(self)
+    }
+    
     /// Creates a new file.
     /// 
     /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!

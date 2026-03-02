@@ -1,6 +1,6 @@
 [package]
 name = "filess"
-version = "0.3.4"
+version = "0.4.0"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
@@ -20,13 +20,13 @@ tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
 default = ["all-files", "rayon"]
-# default = ["serde", "image", "async", "all-files", "rayon"]
+# default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd"]
 # default = ["serde", "image", "async", "rayon"]
 
 all-files = ["all-text", "all-images", "all-audio"]
 all-text = ["json", "toml", "md", "txt"]
 all-images = ["jpeg", "png", "webp", "avif", "tiff", "gif", "bmp", "exr", "ff", "hdr", "ico", "pnm", "qoi", "tga"]
-all-audio = ["ogg"]
+all-audio = ["ogg", "mkv", "wav", "aiff", "flac", "mp4", "mp3", "mp2", "mp1", "mpa", "alac"]
 
 json = ["dep:serde_json", "_any_text", "_any_model"]
 toml = ["dep:serde_toml", "_any_text", "_any_model"]
@@ -48,7 +48,26 @@ pnm = ["_any_image", "image?/pnm"]
 qoi = ["_any_image", "image?/qoi"]
 tga = ["_any_image", "image?/tga"]
 
-ogg = ["_any_audio", "symphonia?/ogg"]
+# TODO: might need to refactor, change to specific symphonia flags
+ogg = ["_any_audio", "symphonia?/ogg", "symphonia?/vorbis", "symphonia?/flac", "symphonia?/pcm"]
+mkv = [
+    "_any_audio",
+    "symphonia/mkv",
+    "symphonia/vorbis",
+    "symphonia/flac",
+    "symphonia/pcm",
+    "symphonia/mp3",
+    "symphonia/aac"
+]
+wav = ["_any_audio", "symphonia?/wav", "symphonia?/pcm"]
+aiff = ["_any_audio", "symphonia?/aiff", "symphonia?/pcm"]
+flac = ["_any_audio", "symphonia?/flac"]
+mp4 = ["_any_audio", "symphonia?/isomp4", "symphonia?/aac", "symphonia?/alac", "symphonia?/mp3"]
+mp3 = ["_any_audio", "symphonia?/mp3"]
+mp2 = ["_any_audio", "symphonia?/mp2"]
+mp1 = ["_any_audio", "symphonia?/mp1"]
+mpa = ["_any_audio", "symphonia?/mpa", "symphonia?/mp3"]
+alac = ["_any_audio", "symphonia?/caf", "symphonia?/alac", "symphonia?/isomp4"]
 
 _any_text = []
 _any_model = []
@@ -60,8 +79,5 @@ image = ["dep:image"]
 image-nasm = ["image", "image/nasm"]
 rayon = ["image?/rayon"]
 async = ["dep:tokio"]
-symphonia = ["dep:symphonia"]
-symphonia-simd = ["symphonia", "symphonia/opt-simd"]
-
-# [target.'cfg(target_os = "linux")'.dependencies]
-# tokio = { version = "1.49.0", features = ["io-uring"] }
+audio = ["dep:symphonia"]
+symphonia-simd = ["audio", "symphonia/opt-simd"]
