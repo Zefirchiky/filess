@@ -52,12 +52,12 @@ tga = ["_any_image", "image?/tga"]
 ogg = ["_any_audio", "symphonia?/ogg", "symphonia?/vorbis", "symphonia?/flac", "symphonia?/pcm"]
 mkv = [
     "_any_audio",
-    "symphonia/mkv",
-    "symphonia/vorbis",
-    "symphonia/flac",
-    "symphonia/pcm",
-    "symphonia/mp3",
-    "symphonia/aac"
+    "symphonia?/mkv",
+    "symphonia?/vorbis",
+    "symphonia?/flac",
+    "symphonia?/pcm",
+    "symphonia?/mp3",
+    "symphonia?/aac"
 ]
 wav = ["_any_audio", "symphonia?/wav", "symphonia?/pcm"]
 aiff = ["_any_audio", "symphonia?/aiff", "symphonia?/pcm"]
