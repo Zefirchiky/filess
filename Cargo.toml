@@ -22,7 +22,7 @@ tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 [features]
 default = ["all-files", "rayon"]
 # default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd", "rodio"]
-# default = ["serde", "image", "async", "rayon"]
+# default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
 
 all-files = ["all-text", "all-images", "all-audio"]
 all-text = ["json", "toml", "md", "txt"]

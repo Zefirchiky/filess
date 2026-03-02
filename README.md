@@ -2,7 +2,7 @@
 
 Simplify file management with file primitives.
 
-Use `filess` as you would use String or Vec.
+Use `filess` as you would use `String` or `Vec`.
 
 Each file format is now a separate type, if your function needs json, you can put `filess::Json` as file type, enforcing the proper path.
 
@@ -16,7 +16,7 @@ let model: YourModel = file1.load_model()?;         // Or like this
 file1.save(&data)?;                                 // Save anything with `impl AsRef<[u8]>`
 file1.save_model(&model)?;                          // `Serde` integration: save a model into file
 
-let file2: Jpeg = Jpeg::new("path/to/image.jpeg");
+let file2: Jpeg = Temporary::new(Jpeg::new("path/to/image.jpeg")); // Temporary file will be deleted together with it's empty parent dirs at `drop()`
 let image: DynamicImage = file2.load_image()?;      // `Image` integration: load image of jpeg format from file
 file2.save_image(&image)?;                          // `Image` integration: save `DynamicImage` with default compression parameters
 // `Image` integration: save `DynamicImage` with custom quality parameters (only available if supports quality settings)
@@ -40,7 +40,8 @@ Jpeg::new("another/path/image.jpeg").save_image_async(&image2).await?;
 | `image-nasm` | Turns on `nasm` feature of `image`
 | `audio`      | `Symphonia` integration, adds `load_audio` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
 | `symphonia-simd`| Turns on `opt-simd` feature of `symphonia`
+| `rodio`      | Adds minimal rodio integration, allowing `DecodedStream` to be directly passed as source
 | `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `save_image_custom_async_offload` to offload image encoding
-| `rayon`      | (Default) Turns on all of `rayon` features in crates that support it.
+| `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.
