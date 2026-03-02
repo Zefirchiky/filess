@@ -63,25 +63,37 @@ impl ModelTypes {
 }
 
 // impl crate::ModelFile for ModelFile {
-    
+
 // }
 
 #[cfg(feature = "image")]
 define_file_types!(
     ImageTypes,
     Image,
-    #[cfg(feature = "jpeg")] Jpeg,
-    #[cfg(feature = "png")]  Png,
-    #[cfg(feature = "webp")] WebP,
-    #[cfg(feature = "gif")]  Gif,
-    #[cfg(feature = "bmp")]  Bmp,
-    #[cfg(feature = "exr")]  Exr,
-    #[cfg(feature = "ff")]   Ff,
-    #[cfg(feature = "hdr")]  Hdr,
-    #[cfg(feature = "ico")]  Ico,
-    #[cfg(feature = "pnm")]  Pnm,
-    #[cfg(feature = "qoi")]  Qoi,
-    #[cfg(feature = "tga")]  Tga,
+    #[cfg(feature = "jpeg")]
+    Jpeg,
+    #[cfg(feature = "png")]
+    Png,
+    #[cfg(feature = "webp")]
+    WebP,
+    #[cfg(feature = "gif")]
+    Gif,
+    #[cfg(feature = "bmp")]
+    Bmp,
+    #[cfg(feature = "exr")]
+    Exr,
+    #[cfg(feature = "ff")]
+    Ff,
+    #[cfg(feature = "hdr")]
+    Hdr,
+    #[cfg(feature = "ico")]
+    Ico,
+    #[cfg(feature = "pnm")]
+    Pnm,
+    #[cfg(feature = "qoi")]
+    Qoi,
+    #[cfg(feature = "tga")]
+    Tga,
 );
 
 #[cfg(all(test, feature = "json"))]

@@ -1,6 +1,6 @@
 [package]
 name = "filess"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "debug", "as_ref", "into_iterator"] }
 image = { version = "0.25.9", optional = true, default-features = false }
+rodio = { version = "0.22.1", default-features = false, optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
 serde_json = { version = "1.0.145", optional = true }
 serde_toml = { package = "toml", version = "0.9.11", optional = true, features = ["fast_hash"] }
@@ -20,7 +21,7 @@ tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
 default = ["all-files", "rayon"]
-# default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd"]
+# default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd", "rodio"]
 # default = ["serde", "image", "async", "rayon"]
 
 all-files = ["all-text", "all-images", "all-audio"]
@@ -28,8 +29,8 @@ all-text = ["json", "toml", "md", "txt"]
 all-images = ["jpeg", "png", "webp", "avif", "tiff", "gif", "bmp", "exr", "ff", "hdr", "ico", "pnm", "qoi", "tga"]
 all-audio = ["ogg", "mkv", "wav", "aiff", "flac", "mp4", "mp3", "mp2", "mp1", "mpa", "alac"]
 
-json = ["dep:serde_json", "_any_text", "_any_model"]
-toml = ["dep:serde_toml", "_any_text", "_any_model"]
+json = ["_any_text", "_any_model", "dep:serde_json"]
+toml = ["_any_text", "_any_model", "dep:serde_toml"]
 md = ["_any_text"]
 txt = ["_any_text"]
 
@@ -81,3 +82,4 @@ rayon = ["image?/rayon"]
 async = ["dep:tokio"]
 audio = ["dep:symphonia"]
 symphonia-simd = ["audio", "symphonia/opt-simd"]
+rodio = ["audio", "dep:rodio"]

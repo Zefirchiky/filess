@@ -1,5 +1,9 @@
 use std::{
-    fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf}
+    fmt::Debug,
+    fs::{self, create_dir_all},
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+    path::{Path, PathBuf},
 };
 
 use derive_more::{AsRef, Deref, DerefMut};
@@ -44,29 +48,34 @@ impl<F: FileTrait> FileBase<F> {
             }
         }
 
-        Self { path: file, _phantom: PhantomData }
+        Self {
+            path: file,
+            _phantom: PhantomData,
+        }
     }
-    
+
     pub fn as_file(&self) -> std::io::Result<fs::File> {
         fs::File::create(self)
     }
-    
+
     /// Creates a new file.
-    /// 
+    ///
     /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!
     pub fn create(&self) -> std::io::Result<()> {
         if let Some(parent) = self.path.parent() {
             create_dir_all(parent)?
         }
-        
+
         match F::file_init_bytes() {
             Some(b) => fs::write(self, b)?,
-            None => { fs::File::create(self)?; },
+            None => {
+                fs::File::create(self)?;
+            }
         };
-        
+
         Ok(())
     }
-    
+
     #[cfg(feature = "async")]
     pub async fn create_async(&self) -> std::io::Result<()> {
         use tokio::fs;
@@ -74,17 +83,19 @@ impl<F: FileTrait> FileBase<F> {
         if let Some(parent) = self.path.parent() {
             fs::create_dir_all(parent).await?
         }
-        
+
         match F::file_init_bytes() {
             Some(b) => fs::write(&self, b).await?,
-            None => { fs::File::create(&self).await?; }
+            None => {
+                fs::File::create(&self).await?;
+            }
         }
-        
+
         Ok(())
     }
-    
+
     /// Saves data to the file.
-    /// 
+    ///
     /// File will be created if it didn't exist.
     pub fn save(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
         if let Some(parent) = self.path.parent() {
@@ -103,25 +114,29 @@ impl<F: FileTrait> FileBase<F> {
         tokio::fs::write(&self.path, data).await?;
         Ok(())
     }
-    
+
     /// Loads data from a file.
-    /// 
+    ///
     /// If file didn't exist, it will be created and `F::file_init_bytes()` will be returned.
     pub fn load(&self) -> std::io::Result<Vec<u8>> {
-        if !self.path.try_exists()? { self.create()?; }
+        if !self.path.try_exists()? {
+            self.create()?;
+        }
         fs::read(&self.path)
     }
 
     #[cfg(feature = "async")]
     pub async fn load_async(&self) -> std::io::Result<Vec<u8>> {
-        if !tokio::fs::try_exists(self).await? { self.create_async().await?; }
+        if !tokio::fs::try_exists(self).await? {
+            self.create_async().await?;
+        }
         tokio::fs::read(&self.path).await
     }
-    
+
     pub fn remove(&self) -> std::io::Result<()> {
         fs::remove_file(self)
     }
-    
+
     #[cfg(feature = "async")]
     pub async fn remove_async(&self) -> std::io::Result<()> {
         tokio::fs::remove_file(self).await

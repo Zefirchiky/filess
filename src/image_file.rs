@@ -47,9 +47,9 @@ pub trait ImageQualityConfig<'a> {
 
 pub trait ImageQulityEncoding: FileTrait {
     type Config: for<'a> ImageQualityConfig<'a> + Sync + Send;
-    
+
     /// Save image with custom quality.
-    /// 
+    ///
     /// Use `save_image_custom_async` or `save_image_custom_async_offload` if this is too slow and `async` feature is enabled.
     fn save_image_custom(
         &self,
@@ -66,7 +66,7 @@ pub trait ImageQulityEncoding: FileTrait {
 #[cfg(feature = "async")]
 pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
     /// Save image with custom quality.
-    /// 
+    ///
     /// Use `save_image_custom_async_offload` if this is too slow.
     async fn save_image_custom_async(
         &self,
@@ -78,23 +78,21 @@ pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
         self.save_async(&buf).await?;
         Ok(())
     }
-    
+
     /// Save image with `offload` function and custom quality.
-    /// 
+    ///
     /// Use if encoding image is expensive and you want to offload it into a separate thread/async.
     async fn save_image_custom_async_offload<'a, F>(
         &'a self,
         img: &'a image::DynamicImage,
         config: Self::Config,
         offload: F,
-    ) -> Result<(), ImageIoError> 
+    ) -> Result<(), ImageIoError>
     where
         F: FnOnce(Box<dyn FnOnce() -> Result<(), ImageIoError> + Send + 'a>),
         F::Output: Future<Output = Result<(), ImageIoError>>,
         Self: Sync + Send,
     {
-        (offload)(Box::new(move || {
-            self.save_image_custom(&img, config)
-        })).await
+        (offload)(Box::new(move || self.save_image_custom(&img, config))).await
     }
 }

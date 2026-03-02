@@ -6,9 +6,9 @@ macro_rules! define_file {
         $(,$init_bytes:expr)?
     ) => {
         use derive_more::{From, AsRef, Deref, DerefMut};
-        
+
         pub use crate::{FileBase, FileTrait};
-        
+
         #[derive(Debug, Default, Clone, From, AsRef, Deref, DerefMut)]
         #[from(forward)]
         #[as_ref(forward)]
@@ -18,7 +18,7 @@ macro_rules! define_file {
         pub struct $name {
             file: FileBase<Self>,
         }
-        
+
         impl $name {
             #[doc = concat!("Creates new ", stringify!($name), ".",
                 "\n\n#Panics")]
@@ -27,23 +27,23 @@ macro_rules! define_file {
                 // TODO: Check binary size generated
             }
         }
-        
+
         impl FileTrait for $name {
             #[doc = concat!("Creates new ", stringify!($name), ".",
                 "\n\n#Panics")]
             fn new(path: impl AsRef<std::path::Path>) -> Self {
                 Self { file: FileBase::new(path) }
             }
-            
+
             #[doc = concat!("Returns the file extensions supported by ", stringify!($name), ".")]
             fn ext() -> &'static [&'static str] {
                 &[$($ext),*]
             }
-            
+
             $(
                 #[doc = concat!("Returns optional file initial bytes for ", stringify!($name), ".")]
                 fn file_init_bytes() -> Option<&'static [u8]> {
-                    return Some($init_bytes);    
+                    return Some($init_bytes);
                 }
             )?
         }
@@ -63,7 +63,7 @@ macro_rules! define_image_file {
                     $format
                 }
             }
-            
+
             #[cfg(feature = "async")]
             impl crate::ImageFileAsync for $name {}
         };
