@@ -20,11 +20,11 @@ define_file!(Json, ["json"], b"{}");
 impl ModelFile for Json {
     type Error = ModelJsonIoError;
     
-    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error> {
+    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(&self, data: Vec<u8>) -> Result<T, Self::Error> {
         Ok(serde_json::from_slice(&data)?)
     }
     
-    fn model_to_bytes(model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
+    fn model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         Ok(serde_json::to_vec_pretty(model)?)
     }
 }
@@ -95,7 +95,7 @@ mod json {
 mod async_tests {
     use std::env::temp_dir;
 
-    use crate::Temporary;
+    use crate::{FileTraitAsync, Temporary};
 
     use super::*;
 
@@ -106,8 +106,9 @@ mod async_tests {
         let handler = Temporary::new(Json::new(&file_path));
         let data = b"async data";
 
-        handler.save_async(&data).await.expect("Async save failed");
-        let loaded = handler.load_async().await.expect("Async load failed");
+        handler.asave
+            (&data).await.expect("Async save failed");
+        let loaded = handler.aload().await.expect("Async load failed");
 
         assert_eq!(loaded, data);
     }
@@ -153,8 +154,8 @@ mod json_model {
     fn bytes_conversion() {
         let user = User { name: "Alice".into(), age: 30 };
         
-        let bytes = Json::model_to_bytes(&user).unwrap();
-        let decoded: User = Json::bytes_to_model(bytes).unwrap();
+        let bytes = Json::new("whatever.json").model_to_bytes(&user).unwrap();
+        let decoded: User = Json::new("whatever.json").bytes_to_model(bytes).unwrap();
         
         assert_eq!(user, decoded);
     }
@@ -174,7 +175,7 @@ mod json_model {
 
 #[cfg(all(test, feature = "async"))]
 mod json_model_async {
-    use crate::{Temporary, test_assets::{User, get_temp_path}};
+    use crate::{FileTraitAsync, Temporary, test_assets::{User, get_temp_path}};
 
     use super::*;
 
@@ -184,10 +185,10 @@ mod json_model_async {
         let handler = Temporary::new(Json::new(&path));
         let user = User { name: "Async".into(), age: 10 };
 
-        handler.save_model_async(&user).await.expect("Async save failed");
-        let loaded: User = handler.load_model_async().await.expect("Async load failed");
+        handler.asave_model(&user).await.expect("Async save failed");
+        let loaded: User = handler.aload_model().await.expect("Async load failed");
         
         assert_eq!(user, loaded);
-        let _ = handler.remove_async().await;
+        let _ = handler.aremove().await;
     }
 }

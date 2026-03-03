@@ -22,9 +22,9 @@ file2.save_image(&image)?;                          // `Image` integration: save
 // `Image` integration: save `DynamicImage` with custom quality parameters (only available if supports quality settings)
 file2.save_image_custom(&image, JpegConfig { quality: 40 })?;
 
-// Each function have their async variants if `async` feature is on
-let image2 = file2.load_image_async().await?;
-Jpeg::new("another/path/image.jpeg").save_image_async(&image2).await?;
+// Each function have their async variants (prefixed with `a`) if `async` feature is on
+let image2 = file2.aload_image().await?;
+Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
 ```
 
 ## Features
@@ -41,7 +41,7 @@ Jpeg::new("another/path/image.jpeg").save_image_async(&image2).await?;
 | `audio`      | `Symphonia` integration, adds `load_audio` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
 | `symphonia-simd`| Turns on `opt-simd` feature of `symphonia`
 | `rodio`      | Adds minimal rodio integration, allowing `DecodedStream` to be directly passed as source
-| `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `save_image_custom_async_offload` to offload image encoding
+| `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `asave_image_custom_offload` to offload image encoding
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.

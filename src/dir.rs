@@ -1,18 +1,17 @@
 use std::{
-    fs::create_dir_all,
+    io,
     ops::Div,
     path::{Path, PathBuf},
 };
 
 use derive_more::{AsMut, AsRef, Deref, DerefMut, From, IntoIterator};
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 
-use crate::{File, FileTrait, FileType, FsHandler};
+use crate::FileTrait;
+pub use crate::{FileType, FsHandler};
 
 #[derive(Debug, Default, From, IntoIterator, AsRef, AsMut, Deref, DerefMut)]
 #[from(forward)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dir {
     #[deref]
     #[deref_mut]
@@ -37,9 +36,6 @@ impl Dir {
 
         if dir.exists() {
             assert!(!dir.is_dir(), "{dir:?} is not a directory")
-        } else {
-            create_dir_all(&dir)
-                .unwrap_or_else(|e| panic!("Failed to create directories for {dir:?}: {e}"));
         }
 
         Self {
@@ -47,7 +43,41 @@ impl Dir {
             files: vec![],
         }
     }
-
+    
+    /// Will create a this directory and recursively create all child files and directories.
+    /// 
+    /// It is recommended to use async version of this method
+    pub fn create_all(&self) -> io::Result<()> {
+        self.create()?;
+        for file in &self.files {
+            file.create()?;
+        }
+        
+        Ok(())
+    }
+    
+    #[cfg(feature = "async")]
+    pub async fn acreate_all(&self) -> io::Result<()> {
+        use crate::FileTraitAsync;
+        
+        self.acreate().await?;
+        for file in &self.files {
+            file.acreate().await?;
+        }
+        
+        Ok(())
+    }
+    
+    pub fn create(&self) -> io::Result<()> {
+        std::fs::create_dir_all(&self)
+    }
+    
+    #[cfg(feature = "async")]
+    pub async fn acreate(&self) -> io::Result<()> {
+        tokio::fs::create_dir_all(&self).await
+    }
+    
+    /// Adds a file to this directory. Path should be relative to the folder
     pub fn add(&mut self, file: FileType) {
         self.files.push(file)
     }
@@ -67,11 +97,11 @@ impl From<PathBuf> for Dir {
 
 impl From<&str> for Dir {
     fn from(value: &str) -> Self {
-        Dir::new(value)
+        Self::new(value)
     }
 }
 
-impl<P: FileTrait> Div<P> for Dir {
+impl<P: crate::FileTrait> Div<P> for Dir {
     type Output = P;
     fn div(self, rhs: P) -> Self::Output {
         P::from(self.join(rhs))
@@ -86,11 +116,11 @@ impl Div<Self> for Dir {
 }
 
 impl Div<&str> for Dir {
-    type Output = FsHandler<File>;
+    type Output = FsHandler;
     fn div(self, rhs: &str) -> Self::Output {
         let new_path = self.path.join(rhs);
         if let Some(_) = new_path.extension() {
-            FsHandler::File(File::new(&self.join(rhs)))
+            FsHandler::File(FileType::from_ext(&self.join(rhs)))
         } else {
             FsHandler::Dir(Self::new(self.join(rhs)))
         }

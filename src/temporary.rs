@@ -20,7 +20,7 @@ impl<H: FileTrait> Temporary<H> {
 impl<T: FileTrait> Drop for Temporary<T> {
     fn drop(&mut self) {
         let _ = fs::remove_file(&self.inner);
-        for dir in self.parent().into_iter().rev() {
+        for dir in self.as_ref().parent().into_iter().rev() {
             if fs::remove_dir(dir).is_err() {
                 break;
             }

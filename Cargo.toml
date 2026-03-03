@@ -6,7 +6,7 @@ description = "Simplified file management"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "debug", "as_ref", "into_iterator"] }
+derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "as_ref", "into_iterator"] }
 image = { version = "0.25.9", optional = true, default-features = false }
 rodio = { version = "0.22.1", default-features = false, optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
@@ -20,8 +20,9 @@ tokio = { version = "1.49.0", default-features = false, features = ["fs", "parki
 tokio = { version = "1.49.0", features = ["macros", "rt-multi-thread"] }
 
 [features]
-default = ["all-files", "rayon"]
-# default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd", "rodio"]
+# default = ["all-files", "rayon"]
+# default = ["txt", "md", "toml", "serde", "all-images", "all-audio", "rayon"]
+default = ["serde", "image", "async", "all-files", "rayon", "symphonia-simd", "rodio"]
 # default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
 
 all-files = ["all-text", "all-images", "all-audio"]

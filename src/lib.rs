@@ -4,6 +4,7 @@ mod audio_file;
 mod dir;
 mod file_base;
 mod file_macros;
+mod file_type_macros;
 mod file_types;
 pub mod files;
 mod fs_handler;
@@ -17,7 +18,7 @@ mod util_macros;
 #[cfg(feature = "audio")]
 pub use audio_file::*;
 pub use dir::Dir;
-pub use file_base::{FileBase, FileTrait};
+pub use file_base::*;
 pub use file_types::*;
 pub use files::*;
 pub use fs_handler::FsHandler;

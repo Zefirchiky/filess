@@ -7,26 +7,30 @@ pub trait ModelIoError: From<std::io::Error> {}
 pub trait ModelFile: FileTrait {
     type Error: ModelIoError;
 
-    fn model_to_bytes(model: &impl Serialize) -> Result<Vec<u8>, Self::Error>;
+    fn model_to_bytes(&self, model: &impl Serialize) -> Result<Vec<u8>, Self::Error>;
     fn save_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
-        self.save(&Self::model_to_bytes(model)?)?;
+        self.save(&self.model_to_bytes(model)?)?;
         Ok(())
     }
 
     #[cfg(feature = "async")]
-    async fn save_model_async(&self, model: &impl Serialize) -> Result<(), Self::Error> {
-        self.save_async(&Self::model_to_bytes(model)?).await?;
+    async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
+        use crate::file_base::FileTraitAsync;
+
+        self.asave(&self.model_to_bytes(model)?).await?;
         Ok(())
     }
 
-    fn bytes_to_model<T: for<'de> Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error>;
+    fn bytes_to_model<T: for<'de> Deserialize<'de>>(&self, data: Vec<u8>) -> Result<T, Self::Error>;
     fn load_model<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
-        Self::bytes_to_model(self.load()?)
+        self.bytes_to_model(self.load()?)
     }
 
     #[cfg(feature = "async")]
-    async fn load_model_async<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
-        Self::bytes_to_model(self.load_async().await?)
+    async fn aload_model<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
+        use crate::FileTraitAsync;
+
+        self.bytes_to_model(self.aload().await?)
     }
 }
 

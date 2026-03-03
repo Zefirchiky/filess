@@ -1,6 +1,6 @@
-use crate::{Dir, FileTrait};
+use crate::{Dir, FileType};
 
-pub enum FsHandler<H: FileTrait> {
+pub enum FsHandler {
     Dir(Dir),
-    File(H),
+    File(FileType),
 }

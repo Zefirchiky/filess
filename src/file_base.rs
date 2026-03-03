@@ -2,15 +2,17 @@ use std::{
     fmt::Debug,
     fs::{self, create_dir_all},
     marker::PhantomData,
-    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 
 use derive_more::{AsRef, Deref, DerefMut};
 
-#[derive(Debug, Clone, Default, AsRef, Deref, DerefMut)]
+pub use FileTrait as _;
+#[cfg(feature = "async")]
+pub use crate::FileTraitAsync as _;
+
+#[derive(Debug, Clone, Default, AsRef, Deref, DerefMut, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(test, derive(PartialEq))]
 pub struct FileBase<F: FileTrait> {
     // TODO: With thousands of paths, central storage is preferable. Something like a mini filesystem. OPTIMIZATIONS BABE
     #[as_ref(forward)]
@@ -53,94 +55,6 @@ impl<F: FileTrait> FileBase<F> {
             _phantom: PhantomData,
         }
     }
-
-    pub fn as_file(&self) -> std::io::Result<fs::File> {
-        fs::File::create(self)
-    }
-
-    /// Creates a new file.
-    ///
-    /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!
-    pub fn create(&self) -> std::io::Result<()> {
-        if let Some(parent) = self.path.parent() {
-            create_dir_all(parent)?
-        }
-
-        match F::file_init_bytes() {
-            Some(b) => fs::write(self, b)?,
-            None => {
-                fs::File::create(self)?;
-            }
-        };
-
-        Ok(())
-    }
-
-    #[cfg(feature = "async")]
-    pub async fn create_async(&self) -> std::io::Result<()> {
-        use tokio::fs;
-
-        if let Some(parent) = self.path.parent() {
-            fs::create_dir_all(parent).await?
-        }
-
-        match F::file_init_bytes() {
-            Some(b) => fs::write(&self, b).await?,
-            None => {
-                fs::File::create(&self).await?;
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Saves data to the file.
-    ///
-    /// File will be created if it didn't exist.
-    pub fn save(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
-        if let Some(parent) = self.path.parent() {
-            create_dir_all(parent)?
-        }
-        fs::write(&self.path, data)?;
-        Ok(())
-    }
-
-    #[cfg(feature = "async")]
-    pub async fn save_async(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
-        use tokio::fs;
-        if let Some(parent) = self.path.parent() {
-            fs::create_dir_all(parent).await?
-        }
-        tokio::fs::write(&self.path, data).await?;
-        Ok(())
-    }
-
-    /// Loads data from a file.
-    ///
-    /// If file didn't exist, it will be created and `F::file_init_bytes()` will be returned.
-    pub fn load(&self) -> std::io::Result<Vec<u8>> {
-        if !self.path.try_exists()? {
-            self.create()?;
-        }
-        fs::read(&self.path)
-    }
-
-    #[cfg(feature = "async")]
-    pub async fn load_async(&self) -> std::io::Result<Vec<u8>> {
-        if !tokio::fs::try_exists(self).await? {
-            self.create_async().await?;
-        }
-        tokio::fs::read(&self.path).await
-    }
-
-    pub fn remove(&self) -> std::io::Result<()> {
-        fs::remove_file(self)
-    }
-
-    #[cfg(feature = "async")]
-    pub async fn remove_async(&self) -> std::io::Result<()> {
-        tokio::fs::remove_file(self).await
-    }
 }
 
 impl<H: FileTrait> From<&'static Path> for FileBase<H> {
@@ -168,16 +82,106 @@ impl<H: FileTrait> From<String> for FileBase<H> {
 }
 
 pub trait FileTrait:
-    Debug
-    + Clone
-    + Default
-    + From<PathBuf>
-    + From<&'static str>
-    + AsRef<Path>
-    + Deref<Target = FileBase<Self>> // Deref here is fine, as files should not have any more information and should not have any more function than wrapping FileBase
-    + DerefMut
+    Debug + Clone + Default + From<PathBuf> + From<&'static str> + AsRef<Path>
 {
+    /// Creates new file
     fn new(path: impl AsRef<Path>) -> Self;
-    fn file_init_bytes() -> Option<&'static [u8]> { None }
+    /// Initial file bytes, if needed
+    fn file_init_bytes() -> Option<&'static [u8]> {
+        None
+    }
+    /// Possible file extension that will be forced
     fn ext() -> &'static [&'static str];
+
+    /// Returns `std::fs::File` for this `File`
+    fn as_file(&self) -> std::io::Result<fs::File> {
+        fs::File::create(self)
+    }
+
+    /// Creates a new file.
+    ///
+    /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!
+    fn create(&self) -> std::io::Result<()> {
+        if let Some(parent) = self.as_ref().parent() {
+            create_dir_all(parent)?
+        }
+
+        match Self::file_init_bytes() {
+            Some(b) => fs::write(self, b)?,
+            None => {
+                fs::File::create(self)?;
+            }
+        };
+
+        Ok(())
+    }
+
+    /// Saves data to the file.
+    ///
+    /// File will be created if it didn't exist.
+    fn save(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
+        if let Some(parent) = self.as_ref().parent() {
+            create_dir_all(parent)?
+        }
+        fs::write(&self.as_ref(), data)?;
+        Ok(())
+    }
+
+    /// Loads data from a file.
+    ///
+    /// If file didn't exist, it will be created and `F::file_init_bytes()` will be returned.
+    fn load(&self) -> std::io::Result<Vec<u8>> {
+        if !self.as_ref().try_exists()? {
+            self.create()?;
+        }
+        fs::read(&self.as_ref())
+    }
+
+    /// Removes the file from the disk
+    fn remove(&self) -> std::io::Result<()> {
+        fs::remove_file(self)
+    }
 }
+
+#[cfg(feature = "async")]
+pub trait FileTraitAsync: FileTrait {
+    async fn acreate(&self) -> std::io::Result<()> {
+        use tokio::fs;
+
+        if let Some(parent) = self.as_ref().parent() {
+            fs::create_dir_all(parent).await?
+        }
+
+        match Self::file_init_bytes() {
+            Some(b) => fs::write(&self, b).await?,
+            None => {
+                fs::File::create(&self).await?;
+            }
+        }
+
+        Ok(())
+    }
+    
+    async fn asave(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
+        use tokio::fs;
+        if let Some(parent) = self.as_ref().parent() {
+            fs::create_dir_all(parent).await?
+        }
+        tokio::fs::write(&self.as_ref(), data).await?;
+        Ok(())
+    }
+        
+    async fn aload(&self) -> std::io::Result<Vec<u8>> {
+        if !tokio::fs::try_exists(self).await? {
+            self.acreate().await?;
+        }
+        tokio::fs::read(&self.as_ref()).await
+    }
+    
+    async fn aremove(&self) -> std::io::Result<()> {
+        tokio::fs::remove_file(self).await
+    }
+}
+
+#[cfg(feature = "async")]
+impl<T: FileTrait> FileTraitAsync for T {}

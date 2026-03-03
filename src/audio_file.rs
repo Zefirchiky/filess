@@ -17,6 +17,7 @@ pub enum AudioError {
     NoTrack,
 }
 
+/// Audio stream with format forced
 pub struct DecodedStream<A: AudioFile, D: Decoder> {
     pub reader: A::Reader,
     pub decoder: D,
@@ -129,7 +130,8 @@ pub struct DecodedStreamParams<R: FormatReader> {
 
 pub trait AudioFile: FileTrait {
     type Reader: FormatReader;
-
+    
+    /// Loads audio and parser needed parameters for `Decoder`'s use
     fn load_audio_decoded_stream_params(
         &self,
     ) -> Result<DecodedStreamParams<Self::Reader>, AudioError> {
@@ -153,6 +155,7 @@ pub trait AudioFile: FileTrait {
 }
 
 pub trait AudioContainerFile: AudioFile {
+    /// Loads audio container with `DynamicDecoder`, which can be any `Decoder` supported by this format
     fn load_audio(&self) -> Result<DecodedStream<Self, DynamicDecoder>, AudioError> {
         let params = self.load_audio_decoded_stream_params()?;
         let decoder = symphonia::default::get_codecs().make(&params.params, &Default::default())?;
@@ -167,7 +170,8 @@ pub trait AudioContainerFile: AudioFile {
 pub trait AudioCodecsFile: AudioFile {
     type Decoder: Decoder;
     fn codec_type() -> symphonia::core::codecs::CodecType;
-
+    
+    /// Loads audio with enforced `Decoder`. `DecodedStream` will always be of this format
     fn load_audio(&self) -> Result<DecodedStream<Self, Self::Decoder>, AudioError> {
         let params = self.load_audio_decoded_stream_params()?;
         let decoder = Self::Decoder::try_new(&params.params, &Default::default())?;

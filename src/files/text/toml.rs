@@ -23,11 +23,11 @@ define_file!(Toml, ["toml"]);
 impl ModelFile for Toml {
     type Error = ModelTomlIoError;
 
-    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error> {
+    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(&self, data: Vec<u8>) -> Result<T, Self::Error> {
         Ok(serde_toml::from_slice(&data)?)
     }
     
-    fn model_to_bytes(model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
+    fn model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         Ok(serde_toml::to_string_pretty(model)?.into())
     }
 }
