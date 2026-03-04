@@ -1,12 +1,9 @@
-use std::fs;
-
-use derive_more::{AsRef, Deref, DerefMut, From};
+use std::{fs, ops::{Deref, DerefMut}, path::Path};
 
 use crate::FileTrait;
 
-#[derive(Debug, Clone, From, AsRef, Deref, DerefMut)]
+#[derive(Debug, Clone)]
 // #[from(forward)]
-#[as_ref(forward)]
 pub struct Temporary<H: FileTrait> {
     inner: H,
 }
@@ -14,6 +11,31 @@ pub struct Temporary<H: FileTrait> {
 impl<H: FileTrait> Temporary<H> {
     pub fn new(handler: H) -> Self {
         Self { inner: handler }
+    }
+}
+
+impl<H: FileTrait> AsRef<Path> for Temporary<H> {
+    fn as_ref(&self) -> &Path {
+        &self.inner.as_ref()
+    }
+}
+
+impl<H: FileTrait> From<H> for Temporary<H> {
+    fn from(path: H) -> Self {
+        Self::new(path)
+    }
+}
+
+impl<H: FileTrait> Deref for Temporary<H> {
+    type Target = H;
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<H: FileTrait> DerefMut for Temporary<H> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 

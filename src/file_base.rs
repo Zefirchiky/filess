@@ -1,23 +1,15 @@
 use std::{
-    fmt::Debug,
-    fs::{self, create_dir_all},
-    marker::PhantomData,
-    path::{Path, PathBuf},
+    fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf}
 };
-
-use derive_more::{AsRef, Deref, DerefMut};
 
 #[cfg(feature = "async")]
 pub use crate::FileTraitAsync as _;
 pub use FileTrait as _;
 
-#[derive(Debug, Clone, Default, AsRef, Deref, DerefMut, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileBase<F: FileTrait> {
     // TODO: With thousands of paths, central storage is preferable. Something like a mini filesystem. OPTIMIZATIONS BABE
-    #[as_ref(forward)]
-    #[deref]
-    #[deref_mut]
     pub path: PathBuf,
     _phantom: PhantomData<F>,
 }
@@ -57,6 +49,12 @@ impl<F: FileTrait> FileBase<F> {
     }
 }
 
+impl<H: FileTrait> AsRef<Path> for FileBase<H> {
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
+}
+
 impl<H: FileTrait> From<&'static Path> for FileBase<H> {
     fn from(path: &'static Path) -> Self {
         Self::new(path)
@@ -78,6 +76,19 @@ impl<H: FileTrait> From<&'static str> for FileBase<H> {
 impl<H: FileTrait> From<String> for FileBase<H> {
     fn from(path: String) -> Self {
         Self::new(path)
+    }
+}
+
+impl<H: FileTrait> Deref for FileBase<H> {
+    type Target = PathBuf;
+    fn deref(&self) -> &Self::Target {
+        &self.path
+    }
+}
+
+impl<H: FileTrait> DerefMut for FileBase<H> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.path
     }
 }
 

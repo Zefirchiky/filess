@@ -1,12 +1,11 @@
 [package]
 name = "filess"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-derive_more = { version = "2.0.1", features = ["from", "deref", "deref_mut", "as_ref", "into_iterator"] }
 image = { version = "0.25.9", optional = true, default-features = false }
 rodio = { version = "0.22.1", default-features = false, optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }

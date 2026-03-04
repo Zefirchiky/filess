@@ -4,21 +4,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use derive_more::{AsMut, AsRef, Deref, DerefMut, From, IntoIterator};
-
 use crate::FileTrait;
 pub use crate::{FileType, FsHandler};
 
-#[derive(Debug, Default, From, IntoIterator, AsRef, AsMut, Deref, DerefMut)]
-#[from(forward)]
+#[derive(Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dir {
-    #[deref]
-    #[deref_mut]
-    #[as_ref(forward)]
     path: PathBuf,
-    #[into_iterator(owned, ref, ref_mut)]
-    #[from(skip)]
     #[cfg_attr(feature = "serde", serde(skip))]
     pub files: Vec<FileType>,
 }
@@ -83,35 +75,53 @@ impl Dir {
     }
 }
 
-impl From<&Path> for Dir {
-    fn from(value: &Path) -> Self {
-        Self::new(value)
+impl AsRef<std::path::Path> for Dir {
+    fn as_ref(&self) -> &std::path::Path {
+        &self.path
     }
 }
 
-impl From<PathBuf> for Dir {
-    fn from(value: PathBuf) -> Self {
-        Self::new(value)
+impl From<&std::path::Path> for Dir {
+    fn from(path: &std::path::Path) -> Self {
+        Self::new(path)
+    }
+}
+
+impl From<std::path::PathBuf> for Dir {
+    fn from(path: std::path::PathBuf) -> Self {
+        Self::new(path)
     }
 }
 
 impl From<&str> for Dir {
-    fn from(value: &str) -> Self {
-        Self::new(value)
+    fn from(path: &str) -> Self {
+        Self::new(path)
     }
 }
 
-impl<P: crate::FileTrait> Div<P> for Dir {
-    type Output = P;
-    fn div(self, rhs: P) -> Self::Output {
-        P::from(self.join(rhs))
+impl From<String> for Dir {
+    fn from(path: String) -> Self {
+        Self::new(path)
+    }
+}
+
+impl std::ops::Deref for Dir {
+    type Target = Vec<FileType>;
+    fn deref(&self) -> &Self::Target {
+        &self.files
+    }
+}
+
+impl std::ops::DerefMut for Dir {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.files
     }
 }
 
 impl Div<Self> for Dir {
     type Output = Self;
     fn div(self, rhs: Dir) -> Self::Output {
-        Self::new(self.join(rhs))
+        Self::new(self.as_ref().join(rhs))
     }
 }
 
@@ -120,9 +130,33 @@ impl Div<&str> for Dir {
     fn div(self, rhs: &str) -> Self::Output {
         let new_path = self.path.join(rhs);
         if let Some(_) = new_path.extension() {
-            FsHandler::File(FileType::from_ext(&self.join(rhs)))
+            FsHandler::File(FileType::from_ext(&self.as_ref().join(rhs)))
         } else {
-            FsHandler::Dir(Self::new(self.join(rhs)))
+            FsHandler::Dir(Self::new(self.as_ref().join(rhs)))
         }
+    }
+}
+
+impl IntoIterator for Dir {
+    type Item = FileType;
+    type IntoIter = <Vec<FileType> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.files.into_iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a Dir {
+    type Item = &'a FileType;
+    type IntoIter = <&'a Vec<FileType> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.files.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Dir {
+    type Item = &'a mut FileType;
+    type IntoIter = <&'a mut Vec<FileType> as IntoIterator>::IntoIter;
+    fn into_iter(self) -> Self::IntoIter {
+        self.files.iter_mut()
     }
 }
