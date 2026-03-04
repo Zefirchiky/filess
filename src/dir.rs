@@ -43,40 +43,40 @@ impl Dir {
             files: vec![],
         }
     }
-    
+
     /// Will create a this directory and recursively create all child files and directories.
-    /// 
+    ///
     /// It is recommended to use async version of this method
     pub fn create_all(&self) -> io::Result<()> {
         self.create()?;
         for file in &self.files {
             file.create()?;
         }
-        
+
         Ok(())
     }
-    
+
     #[cfg(feature = "async")]
     pub async fn acreate_all(&self) -> io::Result<()> {
         use crate::FileTraitAsync;
-        
+
         self.acreate().await?;
         for file in &self.files {
             file.acreate().await?;
         }
-        
+
         Ok(())
     }
-    
+
     pub fn create(&self) -> io::Result<()> {
         std::fs::create_dir_all(&self)
     }
-    
+
     #[cfg(feature = "async")]
     pub async fn acreate(&self) -> io::Result<()> {
         tokio::fs::create_dir_all(&self).await
     }
-    
+
     /// Adds a file to this directory. Path should be relative to the folder
     pub fn add(&mut self, file: FileType) {
         self.files.push(file)

@@ -7,9 +7,9 @@ use std::{
 
 use derive_more::{AsRef, Deref, DerefMut};
 
-pub use FileTrait as _;
 #[cfg(feature = "async")]
 pub use crate::FileTraitAsync as _;
+pub use FileTrait as _;
 
 #[derive(Debug, Clone, Default, AsRef, Deref, DerefMut, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -161,7 +161,7 @@ pub trait FileTraitAsync: FileTrait {
 
         Ok(())
     }
-    
+
     async fn asave(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
         use tokio::fs;
         if let Some(parent) = self.as_ref().parent() {
@@ -170,14 +170,14 @@ pub trait FileTraitAsync: FileTrait {
         tokio::fs::write(&self.as_ref(), data).await?;
         Ok(())
     }
-        
+
     async fn aload(&self) -> std::io::Result<Vec<u8>> {
         if !tokio::fs::try_exists(self).await? {
             self.acreate().await?;
         }
         tokio::fs::read(&self.as_ref()).await
     }
-    
+
     async fn aremove(&self) -> std::io::Result<()> {
         tokio::fs::remove_file(self).await
     }

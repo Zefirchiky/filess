@@ -18,7 +18,7 @@ pub trait ImageFile: FileTrait {
     fn load_image(&self) -> Result<DynamicImage, image::ImageError> {
         Ok(ImageReader::open(&self)?.decode()?)
     }
-    
+
     fn image_format() -> image::ImageFormat;
 }
 

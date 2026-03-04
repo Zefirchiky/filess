@@ -1,30 +1,30 @@
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde_json")]
 pub use crate::ModelFile;
 use crate::define_file;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ModelJsonIoError {
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "serde_json")]
     #[error("Seder Error: {0}")]
     Serde(#[from] serde_json::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),
 }
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde_json")]
 impl crate::ModelIoError for ModelJsonIoError {}
 
 define_file!(Json, ["json"], b"{}");
 
-#[cfg(feature = "serde")]
+#[cfg(feature = "serde_json")]
 impl ModelFile for Json {
     type Error = ModelJsonIoError;
     
-    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(&self, data: Vec<u8>) -> Result<T, Self::Error> {
+    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error> {
         Ok(serde_json::from_slice(&data)?)
     }
     
-    fn model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
+    fn model_to_bytes(model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         Ok(serde_json::to_vec_pretty(model)?)
     }
 }
@@ -144,7 +144,7 @@ mod json_from {
     }
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(all(test, feature = "serde_json"))]
 mod json_model {
     use crate::{Temporary, test_assets::{User, get_temp_path}};
 
@@ -154,8 +154,8 @@ mod json_model {
     fn bytes_conversion() {
         let user = User { name: "Alice".into(), age: 30 };
         
-        let bytes = Json::new("whatever.json").model_to_bytes(&user).unwrap();
-        let decoded: User = Json::new("whatever.json").bytes_to_model(bytes).unwrap();
+        let bytes = Json::model_to_bytes(&user).unwrap();
+        let decoded: User = Json::bytes_to_model(bytes).unwrap();
         
         assert_eq!(user, decoded);
     }

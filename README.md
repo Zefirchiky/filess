@@ -22,6 +22,14 @@ file2.save_image(&image)?;                          // `Image` integration: save
 // `Image` integration: save `DynamicImage` with custom quality parameters (only available if supports quality settings)
 file2.save_image_custom(&image, JpegConfig { quality: 40 })?;
 
+let file3 = Ogg::new("path/to/audio.ogg");          // `Symphonia` integration
+let audio: DecodedStream<OggReader, DynamicDecoder> // DecodedStream gives you everything you need for use with `symphonia` and is served as source for `rodio`
+    = file3.load_audio()?;                          // Saving is not support (yet). You can still use `file3.save(&data)` if you have compressed audio
+
+let some_image = ImageType::new("path/to/image.webp"); // `File`, `Text`, `Model`, `Image` and `Audio` Types abstract away exact file types
+let img = some_image.load_image()?;
+some_image.save_image(&img)?;
+
 // Each function have their async variants (prefixed with `a`) if `async` feature is on
 let image2 = file2.aload_image().await?;
 Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
@@ -35,7 +43,7 @@ Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
 | `all-text`   | All currently supported text files: `Json`, `Toml`, `Md`, `Txt`
 | `all-images` | All currently supported image files: `Jpeg`, `Png`, `WebP`, `Avif`, `Tiff`, `Gif`, `Bmp`, `Exr`, `Ff`, `Hdr`, `Ico`, `Pnm`, `Qoi`, `Tga`
 | `all-audio`  | All currently supported audio files: `Ogg`, `Mkv`, `Wav`, `Flac`, `Mp4`, `Mp3`, `Mp2`, `Mp1`, `Mpa`, `Alac`
-| `serde`      | `Serde` integration, adds `save_model` and `load_model` for `Json` and `Toml`
+| `serde`      | `Serde` integration, adds `save_model` and `load_model` for `Json` and `Toml`. Use `serde_json` and `serde_toml` to activate integrations for specific files (due to limitations of cargo)
 | `image`      | `Image` integration, adds `save_image` and `load_image` to all image formats, and `save_image_custom` to formats where `image` supports custom quality
 | `image-nasm` | Turns on `nasm` feature of `image`
 | `audio`      | `Symphonia` integration, adds `load_audio` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods

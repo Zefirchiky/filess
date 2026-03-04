@@ -31,18 +31,28 @@ define_file_types! {
     "txt"  Txt,
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(all(
+    feature = "serde",
+    feature = "_any_model",
+    any(feature = "serde_json", feature = "serde_toml")
+))]
 #[derive(Debug, thiserror::Error)]
 pub enum ModelTypeError {
+    #[cfg(feature = "serde_json")]
     #[error("Json error")]
     Json(#[from] <crate::Json as crate::ModelFile>::Error),
+    #[cfg(feature = "serde_toml")]
     #[error("Toml error")]
     Toml(#[from] <crate::Toml as crate::ModelFile>::Error),
     #[error("Io error")]
     Io(#[from] std::io::Error),
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(all(
+    feature = "serde",
+    feature = "_any_model",
+    any(feature = "serde_json", feature = "serde_toml")
+))]
 impl crate::ModelIoError for ModelTypeError {}
 
 #[cfg(all(feature = "serde", feature = "_any_model"))]
@@ -53,24 +63,24 @@ pub enum ModelType {
     #[cfg(feature = "toml")]
     Toml(crate::Toml),
 }
-    
+
 #[cfg(all(feature = "serde", feature = "_any_model"))]
 impl FileTrait for ModelType {
     fn new(path: impl AsRef<std::path::Path>) -> Self {
         Self::from_ext(path).expect("Must be one of the model formats")
     }
-    
+
     fn ext() -> &'static [&'static str] {
         &[]
     }
 }
-    
+
 #[cfg(all(feature = "serde", feature = "_any_model"))]
 impl AsRef<std::path::Path> for ModelType {
     fn as_ref(&self) -> &std::path::Path {
-        crate::match_self!(self, as_ref, 
-            #[cfg(feature = "json")] Json,
-            #[cfg(feature = "toml")] Toml,
+        crate::match_self!(self, as_ref,
+            "json" Json,
+            "toml" Toml,
         );
     }
 }
@@ -128,28 +138,45 @@ impl ModelType {
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(all(
+    feature = "serde",
+    feature = "_any_model",
+    any(feature = "serde_json", feature = "serde_toml")
+))]
 impl crate::ModelFile for ModelType {
     type Error = ModelTypeError;
-    
-    fn model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
+
+    /// Use `self_model_to_bytes` instead
+    fn model_to_bytes(_model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
+        panic!("Use self_model_to_bytes instead")
+    }
+    fn self_model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         match self {
-            Self::Json(m) => Ok(m.model_to_bytes(model)?),
-            Self::Toml(m) => Ok(m.model_to_bytes(model)?),
+            #[cfg(feature = "serde_json")]
+            Self::Json(m) => Ok(m.self_model_to_bytes(model)?),
+            #[cfg(feature = "serde_toml")]
+            Self::Toml(_) => Ok(crate::Toml::model_to_bytes(model)?),
         }
     }
-    
-    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(&self, data: Vec<u8>) -> Result<T, Self::Error> {
+
+    /// Use self_bytes_to_model instead
+    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(
+        _data: Vec<u8>,
+    ) -> Result<T, Self::Error> {
+        panic!("Use self_bytes_to_model instead")
+    }
+    fn self_bytes_to_model<T: for<'de> serde::Deserialize<'de>>(
+        &self,
+        data: Vec<u8>,
+    ) -> Result<T, Self::Error> {
         match self {
-            Self::Json(m) => Ok(m.bytes_to_model(data)?),
-            Self::Toml(m) => Ok(m.bytes_to_model(data)?),
+            #[cfg(feature = "serde_json")]
+            Self::Json(m) => Ok(m.self_bytes_to_model(data)?),
+            #[cfg(feature = "serde_toml")]
+            Self::Toml(m) => Ok(m.self_bytes_to_model(data)?),
         }
     }
 }
-
-// // impl crate::ModelFile for ModelFile {
-
-// // }
 
 #[cfg(feature = "image")]
 define_file_types!(
@@ -169,7 +196,51 @@ define_file_types!(
     "tga"  Tga,
 );
 
+#[cfg(feature = "image")]
+impl crate::ImageFile for ImageTypes {
+    fn image_format() -> image::ImageFormat {
+        image::ImageFormat::Avif
+    }
+}
 
+#[cfg(feature = "audio")]
+define_file_types!(
+    AudioTypes,
+    Audio,
+    "ogg"  Ogg,
+    "mkv"  Mkv,
+    "flac" Flac,
+    "wav"  Wav,
+    "aiff" Aiff,
+    "mp4"  Mp4,
+    "mp3"  Mp3,
+    "mp2"  Mp2,
+    "mp1"  Mp1,
+    "mpa"  Mpa,
+    "alac" Alac,
+);
+
+// FIXME: Return type might need to be something like `DynamicReader`
+// #[cfg(feature = "audio")]
+// impl AudioTypes {
+//     fn load_audio(&self) -> Result<crate::DecodedStream<Self, crate::DynamicDecoder>, crate::AudioError> {
+//         use crate::{AudioCodecsFile, AudioContainerFile};
+//         crate::match_self_wrapped!(self, load_audio,
+//             "ogg"  Ogg,
+//             "mkv"  Mkv,
+//             "flac" Flac,
+//             "wav"  Wav,
+//             "aiff" Aiff,
+//             "mp4"  Mp4,
+//             "mp3"  Mp3,
+//             "mp2"  Mp2,
+//             "mp1"  Mp1,
+//             "mpa"  Mpa,
+//             "alac" Alac,
+//             @Audio,
+//         )
+//     }
+// }
 
 #[cfg(all(test, feature = "json"))]
 mod file_types {

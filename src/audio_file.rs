@@ -130,7 +130,7 @@ pub struct DecodedStreamParams<R: FormatReader> {
 
 pub trait AudioFile: FileTrait {
     type Reader: FormatReader;
-    
+
     /// Loads audio and parser needed parameters for `Decoder`'s use
     fn load_audio_decoded_stream_params(
         &self,
@@ -170,7 +170,7 @@ pub trait AudioContainerFile: AudioFile {
 pub trait AudioCodecsFile: AudioFile {
     type Decoder: Decoder;
     fn codec_type() -> symphonia::core::codecs::CodecType;
-    
+
     /// Loads audio with enforced `Decoder`. `DecodedStream` will always be of this format
     fn load_audio(&self) -> Result<DecodedStream<Self, Self::Decoder>, AudioError> {
         let params = self.load_audio_decoded_stream_params()?;

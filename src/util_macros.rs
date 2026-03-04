@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! pub_use {
-    ($($format:ident, $feat:literal;)*) => {
+    ($($feat:literal $format:ident,)*) => {
         $(
             #[cfg(feature = $feat)]
             mod $format;
