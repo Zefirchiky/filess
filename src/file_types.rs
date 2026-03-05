@@ -71,8 +71,8 @@ impl FileTrait for ModelType {
 impl AsRef<std::path::Path> for ModelType {
     fn as_ref(&self) -> &std::path::Path {
         crate::match_self!(self, as_ref,
-            "json" Json,
-            "toml" Toml,
+            "serde_json" Json,
+            "serde_toml" Toml,
         );
     }
 }
@@ -80,9 +80,9 @@ impl AsRef<std::path::Path> for ModelType {
 #[cfg(feature = "_any_serde_model")]
 impl Default for ModelType {
     fn default() -> Self {
-        #[cfg(feature = "json")]
+        #[cfg(feature = "serde_json")]
         return Self::Json(crate::Json::default());
-        #[cfg(all(feature = "toml", not(feature = "json")))]
+        #[cfg(all(feature = "serde_toml", not(feature = "serde_json")))]
         return Self::Toml(crate::Toml::default());
     }
 }
@@ -116,11 +116,11 @@ impl ModelType {
         {
             let path_ref = path.as_ref();
             if let Some(ext) = path_ref.extension().and_then(|s| s.to_str()) {
-                #[cfg(feature = "json")]
+                #[cfg(feature = "serde_json")]
                 if crate::Json::ext().contains(&ext) {
                     return Some(Self::Json(crate::Json::new(&path_ref)));
                 }
-                #[cfg(feature = "toml")]
+                #[cfg(feature = "serde_toml")]
                 if crate::Toml::ext().contains(&ext) {
                     return Some(Self::Toml(crate::Toml::new(&path_ref)));
                 }
