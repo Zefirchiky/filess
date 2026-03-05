@@ -31,11 +31,7 @@ define_file_types! {
     "txt"  Txt,
 }
 
-#[cfg(all(
-    feature = "serde",
-    feature = "_any_model",
-    any(feature = "serde_json", feature = "serde_toml")
-))]
+#[cfg(feature = "_any_serde_model")]
 #[derive(Debug, thiserror::Error)]
 pub enum ModelTypeError {
     #[cfg(feature = "serde_json")]
@@ -48,23 +44,19 @@ pub enum ModelTypeError {
     Io(#[from] std::io::Error),
 }
 
-#[cfg(all(
-    feature = "serde",
-    feature = "_any_model",
-    any(feature = "serde_json", feature = "serde_toml")
-))]
+#[cfg(feature = "_any_serde_model")]
 impl crate::ModelIoError for ModelTypeError {}
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 #[derive(Debug, Clone)]
 pub enum ModelType {
-    #[cfg(feature = "json")]
+    #[cfg(feature = "serde_json")]
     Json(crate::Json),
-    #[cfg(feature = "toml")]
+    #[cfg(feature = "serde_toml")]
     Toml(crate::Toml),
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl FileTrait for ModelType {
     fn new(path: impl AsRef<std::path::Path>) -> Self {
         Self::from_ext(path).expect("Must be one of the model formats")
@@ -75,7 +67,7 @@ impl FileTrait for ModelType {
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl AsRef<std::path::Path> for ModelType {
     fn as_ref(&self) -> &std::path::Path {
         crate::match_self!(self, as_ref,
@@ -85,7 +77,7 @@ impl AsRef<std::path::Path> for ModelType {
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl Default for ModelType {
     fn default() -> Self {
         #[cfg(feature = "json")]
@@ -95,28 +87,28 @@ impl Default for ModelType {
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl From<&str> for ModelType {
     fn from(s: &str) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl From<std::path::PathBuf> for ModelType {
     fn from(s: std::path::PathBuf) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl From<&std::path::Path> for ModelType {
     fn from(s: &std::path::Path) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(all(feature = "serde", feature = "_any_model"))]
+#[cfg(feature = "_any_serde_model")]
 impl ModelType {
     #[allow(unused_variables)]
     pub fn from_ext(path: impl AsRef<std::path::Path>) -> Option<Self> {
@@ -138,11 +130,7 @@ impl ModelType {
     }
 }
 
-#[cfg(all(
-    feature = "serde",
-    feature = "_any_model",
-    any(feature = "serde_json", feature = "serde_toml")
-))]
+#[cfg(feature = "_any_serde_model")]
 impl crate::ModelFile for ModelType {
     type Error = ModelTypeError;
 
@@ -153,7 +141,7 @@ impl crate::ModelFile for ModelType {
     fn self_model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         match self {
             #[cfg(feature = "serde_json")]
-            Self::Json(m) => Ok(m.self_model_to_bytes(model)?),
+            Self::Json(_) => Ok(crate::Json::model_to_bytes(model)?),
             #[cfg(feature = "serde_toml")]
             Self::Toml(_) => Ok(crate::Toml::model_to_bytes(model)?),
         }
@@ -171,9 +159,9 @@ impl crate::ModelFile for ModelType {
     ) -> Result<T, Self::Error> {
         match self {
             #[cfg(feature = "serde_json")]
-            Self::Json(m) => Ok(m.self_bytes_to_model(data)?),
+            Self::Json(_) => Ok(crate::Json::bytes_to_model(data)?),
             #[cfg(feature = "serde_toml")]
-            Self::Toml(m) => Ok(m.self_bytes_to_model(data)?),
+            Self::Toml(_) => Ok(crate::Toml::bytes_to_model(data)?),
         }
     }
 }

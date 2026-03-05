@@ -1,6 +1,6 @@
 [package]
 name = "filess"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
@@ -74,10 +74,11 @@ _any_text = []
 _any_model = []
 _any_image = []
 _any_audio = []
+_any_serde_model = []
 
 serde = ["dep:serde", "image?/serde"]
-serde_json = ["serde", "dep:serde_json", "json"]    # TODO: Remove this if my feature gets accepted
-serde_toml = ["serde", "dep:serde_toml", "toml"]
+serde_json = ["_any_serde_model", "serde", "dep:serde_json", "json"]    # TODO: Remove this if my feature gets accepted
+serde_toml = ["_any_serde_model", "serde", "dep:serde_toml", "toml"]
 image = ["dep:image"]
 image-nasm = ["image", "image/nasm"]
 rayon = ["image?/rayon"]

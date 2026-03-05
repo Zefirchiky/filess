@@ -41,50 +41,50 @@ macro_rules! define_file {
                 }
             )?
         }
-        
+
         impl AsRef<std::path::Path> for $name {
             fn as_ref(&self) -> &std::path::Path {
                 &self
             }
         }
-        
+
         impl From<&FileBase<Self>> for $name {
             fn from(path: &FileBase<Self>) -> Self {
                 Self::new(path)
             }
         }
-        
+
         impl From<&std::path::Path> for $name {
             fn from(path: &std::path::Path) -> Self {
                 Self::new(path)
             }
         }
-        
+
         impl From<std::path::PathBuf> for $name {
             fn from(path: std::path::PathBuf) -> Self {
                 Self::new(path)
             }
         }
-        
+
         impl From<&str> for $name {
             fn from(path: &str) -> Self {
                 Self::new(path)
             }
         }
-        
+
         impl From<String> for $name {
             fn from(path: String) -> Self {
                 Self::new(path)
             }
         }
-        
+
         impl std::ops::Deref for $name {
             type Target = FileBase<Self>;
             fn deref(&self) -> &Self::Target {
                 &self.file
             }
         }
-        
+
         impl std::ops::DerefMut for $name {
             fn deref_mut(&mut self) -> &mut Self::Target {
                 &mut self.file

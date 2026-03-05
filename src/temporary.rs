@@ -1,4 +1,8 @@
-use std::{fs, ops::{Deref, DerefMut}, path::Path};
+use std::{
+    fs,
+    ops::{Deref, DerefMut},
+    path::Path,
+};
 
 use crate::FileTrait;
 

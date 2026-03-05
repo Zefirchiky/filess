@@ -1,5 +1,9 @@
 use std::{
-    fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf}
+    fmt::Debug,
+    fs::{self, create_dir_all},
+    marker::PhantomData,
+    ops::{Deref, DerefMut},
+    path::{Path, PathBuf},
 };
 
 #[cfg(feature = "async")]

@@ -5,17 +5,17 @@ use std::{
 };
 
 use crate::FileTrait;
-pub use crate::{FileType, FsHandler};
+pub use crate::FsHandler;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Dir {
+pub struct Dir<F: FileTrait> {
     path: PathBuf,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub files: Vec<FileType>,
+    pub files: Vec<F>,
 }
 
-impl Dir {
+impl<F: FileTrait> Dir<F> {
     /// Creates a new `Dir` instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
@@ -50,12 +50,7 @@ impl Dir {
 
     #[cfg(feature = "async")]
     pub async fn acreate_all(&self) -> io::Result<()> {
-        use crate::FileTraitAsync;
-
         self.acreate().await?;
-        for file in &self.files {
-            file.acreate().await?;
-        }
 
         Ok(())
     }
@@ -70,92 +65,139 @@ impl Dir {
     }
 
     /// Adds a file to this directory. Path should be relative to the folder
-    pub fn add(&mut self, file: FileType) {
+    pub fn add(&mut self, file: F) {
         self.files.push(file)
     }
+
+    pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
+        self.files.iter().map(|f| f.load()).collect()
+    }
+
+    // ! AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    // #[cfg(feature = "async")]
+    // pub async fn aload_files(&self) -> io::Result<Vec<Vec<u8>>> {
+    //     use crate::FileTraitAsync;
+
+    //     let mut set = tokio::task::JoinSet::new();
+
+    //     for f in self {
+    //         // Spawn each load as a background task
+    //         set.spawn(async move { f.aload().await });
+    //     }
+
+    //     let mut results = Vec::new();
+    //     while let Some(res) = set.join_next().await {
+    //         // res? checks if the task panicked
+    //         // res?? checks if aload() returned an Err
+    //         results.push(res??);
+    //     }
+
+    //     Ok(results)
+    // }
 }
 
-impl AsRef<std::path::Path> for Dir {
+#[cfg(all(feature = "serde", any(feature = "serde_json", feature = "serde_toml")))]
+impl<F: crate::ModelFile> Dir<F> {
+    pub fn self_bytes_to_models<T: for<'de> serde::Deserialize<'de>>(
+        &self,
+        data: Vec<Vec<u8>>,
+    ) -> Result<Vec<T>, F::Error> {
+        self.files.iter()
+            .zip(data)
+            .map(|(f, d)| f.self_bytes_to_model(d))
+            .collect()
+    }
+
+    pub fn load_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
+        Ok(self.self_bytes_to_models(self.load_files()?)?)
+    }
+
+    // pub async fn aload_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
+    //     Ok(self.self_bytes_to_models(self.aload_files().await?)?)
+    // }
+}
+
+impl<F: FileTrait> AsRef<std::path::Path> for Dir<F> {
     fn as_ref(&self) -> &std::path::Path {
         &self.path
     }
 }
 
-impl From<&std::path::Path> for Dir {
+impl<F: FileTrait> From<&std::path::Path> for Dir<F> {
     fn from(path: &std::path::Path) -> Self {
         Self::new(path)
     }
 }
 
-impl From<std::path::PathBuf> for Dir {
+impl<F: FileTrait> From<std::path::PathBuf> for Dir<F> {
     fn from(path: std::path::PathBuf) -> Self {
         Self::new(path)
     }
 }
 
-impl From<&str> for Dir {
+impl<F: FileTrait> From<&str> for Dir<F> {
     fn from(path: &str) -> Self {
         Self::new(path)
     }
 }
 
-impl From<String> for Dir {
+impl<F: FileTrait> From<String> for Dir<F> {
     fn from(path: String) -> Self {
         Self::new(path)
     }
 }
 
-impl std::ops::Deref for Dir {
-    type Target = Vec<FileType>;
+impl<F: FileTrait> std::ops::Deref for Dir<F> {
+    type Target = Path;
     fn deref(&self) -> &Self::Target {
-        &self.files
+        &self.path
     }
 }
 
-impl std::ops::DerefMut for Dir {
+impl<F: FileTrait> std::ops::DerefMut for Dir<F> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.files
+        &mut self.path
     }
 }
 
-impl Div<Self> for Dir {
+impl<F: FileTrait> Div<Self> for Dir<F> {
     type Output = Self;
-    fn div(self, rhs: Dir) -> Self::Output {
-        Self::new(self.as_ref().join(rhs))
+    fn div(self, rhs: Dir<F>) -> Self::Output {
+        Self::new(self.join(rhs))
     }
 }
 
-impl Div<&str> for Dir {
-    type Output = FsHandler;
+impl<F: FileTrait> Div<&str> for Dir<F> {
+    type Output = FsHandler<F>;
     fn div(self, rhs: &str) -> Self::Output {
-        let new_path = self.path.join(rhs);
+        let new_path = self.join(rhs);
         if let Some(_) = new_path.extension() {
-            FsHandler::File(FileType::from_ext(&self.as_ref().join(rhs)))
+            FsHandler::File(F::new(&self.join(rhs)))
         } else {
-            FsHandler::Dir(Self::new(self.as_ref().join(rhs)))
+            FsHandler::Dir(Self::new(self.join(rhs)))
         }
     }
 }
 
-impl IntoIterator for Dir {
-    type Item = FileType;
-    type IntoIter = <Vec<FileType> as IntoIterator>::IntoIter;
+impl<F: FileTrait> IntoIterator for Dir<F> {
+    type Item = F;
+    type IntoIter = <Vec<F> as IntoIterator>::IntoIter;
     fn into_iter(self) -> Self::IntoIter {
         self.files.into_iter()
     }
 }
 
-impl<'a> IntoIterator for &'a Dir {
-    type Item = &'a FileType;
-    type IntoIter = <&'a Vec<FileType> as IntoIterator>::IntoIter;
+impl<'a, F: FileTrait> IntoIterator for &'a Dir<F> {
+    type Item = &'a F;
+    type IntoIter = <&'a Vec<F> as IntoIterator>::IntoIter;
     fn into_iter(self) -> Self::IntoIter {
         self.files.iter()
     }
 }
 
-impl<'a> IntoIterator for &'a mut Dir {
-    type Item = &'a mut FileType;
-    type IntoIter = <&'a mut Vec<FileType> as IntoIterator>::IntoIter;
+impl<'a, F: FileTrait> IntoIterator for &'a mut Dir<F> {
+    type Item = &'a mut F;
+    type IntoIter = <&'a mut Vec<F> as IntoIterator>::IntoIter;
     fn into_iter(self) -> Self::IntoIter {
         self.files.iter_mut()
     }
