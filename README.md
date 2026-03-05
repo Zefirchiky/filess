@@ -4,7 +4,7 @@ Simplify file management with file primitives.
 
 Use `filess` as you would use `String` or `Vec`.
 
-Each file format is now a separate type, if your function needs json, you can put `filess::Json` as file type, enforcing the proper path.
+Each file format is now a separate type, if your function needs json, you can put `filess::Json` as a filed, enforcing the proper path.
 
 `Filess` simplifies saving and loading of data, with `serde`, `image` and `symphonia` optional integration.
 
@@ -26,7 +26,7 @@ let file3 = Ogg::new("path/to/audio.ogg");          // `Symphonia` integration
 let audio: DecodedStream<OggReader, DynamicDecoder> // DecodedStream gives you everything you need for use with `symphonia` and is served as source for `rodio`
     = file3.load_audio()?;                          // Saving is not support (yet). You can still use `file3.save(&data)` if you have compressed audio
 
-let some_image = ImageType::new("path/to/image.webp"); // `File`, `Text`, `Model`, `Image` and `Audio` Types abstract away exact file types
+let some_image = ImageType::new("path/to/image.webp"); // `File`, `Text`, `Model`, `Image` and `Audio` Types abstract away exact file types without overhead ov `Box<dyn>`
 let img = some_image.load_image()?;
 some_image.save_image(&img)?;
 
