@@ -1,4 +1,4 @@
-use crate::{FileTrait, define_file_types};
+use crate::{define_file_types, primitives::FileTrait};
 
 define_file_types! {
     FileType,
@@ -36,16 +36,16 @@ define_file_types! {
 pub enum ModelTypeError {
     #[cfg(feature = "serde_json")]
     #[error("Json error")]
-    Json(#[from] <crate::Json as crate::ModelFile>::Error),
+    Json(#[from] <crate::Json as crate::traits::ModelFile>::Error),
     #[cfg(feature = "serde_toml")]
     #[error("Toml error")]
-    Toml(#[from] <crate::Toml as crate::ModelFile>::Error),
+    Toml(#[from] <crate::Toml as crate::traits::ModelFile>::Error),
     #[error("Io error")]
     Io(#[from] std::io::Error),
 }
 
 #[cfg(feature = "_any_serde_model")]
-impl crate::ModelIoError for ModelTypeError {}
+impl crate::errors::ModelIoError for ModelTypeError {}
 
 #[cfg(feature = "_any_serde_model")]
 #[derive(Debug, Clone)]
@@ -131,7 +131,7 @@ impl ModelType {
 }
 
 #[cfg(feature = "_any_serde_model")]
-impl crate::ModelFile for ModelType {
+impl crate::traits::ModelFile for ModelType {
     type Error = ModelTypeError;
 
     /// Use `self_model_to_bytes` instead
@@ -185,7 +185,7 @@ define_file_types!(
 );
 
 #[cfg(feature = "image")]
-impl crate::ImageFile for ImageTypes {
+impl crate::traits::ImageFile for ImageTypes {
     fn image_format() -> image::ImageFormat {
         image::ImageFormat::Avif
     }

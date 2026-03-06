@@ -9,7 +9,7 @@ pub struct AvifConfig {
 }
 
 #[cfg(feature = "image")]
-impl<'a> crate::ImageQualityConfig<'a> for AvifConfig {
+impl<'a> crate::primitives::ImageQualityConfig<'a> for AvifConfig {
     type Encoder = image::codecs::avif::AvifEncoder<&'a mut Vec<u8>>;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder {
         image::codecs::avif::AvifEncoder::new_with_speed_quality(w, self.speed, self.quality)

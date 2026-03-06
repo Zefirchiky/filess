@@ -1,5 +1,5 @@
 // fn main() {
-//     fn this<F: filess::ModelFile>() {
-//         F::new("path");
+//     fn this<F: filess::primitives::AudioFile>() {
+//         filess::
 //     }
 // }

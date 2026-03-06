@@ -6,7 +6,7 @@ pub struct GifConfig {
 }
 
 #[cfg(feature = "image")]
-impl<'a> crate::ImageQualityConfig<'a> for GifConfig {
+impl<'a> crate::primitives::ImageQualityConfig<'a> for GifConfig {
     type Encoder = image::codecs::gif::GifEncoder<&'a mut Vec<u8>>;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder {
         image::codecs::gif::GifEncoder::new_with_speed(w, self.speed)

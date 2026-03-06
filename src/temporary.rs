@@ -4,15 +4,16 @@ use std::{
     path::Path,
 };
 
-use crate::FileTrait;
+use crate::primitives::FileTrait;
 
+/// Makes an `H` be deleted after drop, together with it's empty parent dirs
 #[derive(Debug, Clone)]
-// #[from(forward)]
 pub struct Temporary<H: FileTrait> {
     inner: H,
 }
 
 impl<H: FileTrait> Temporary<H> {
+    /// Creates new temporary files, that will be deleted after drop
     pub fn new(handler: H) -> Self {
         Self { inner: handler }
     }

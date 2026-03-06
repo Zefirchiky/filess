@@ -4,9 +4,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::FileTrait;
-pub use crate::FsHandler;
+use crate::FsHandler;
+use crate::primitives::FileTrait;
 
+/// A directory structure, simplifies work with multiple files
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dir<F: FileTrait> {
@@ -94,15 +95,24 @@ impl<F: FileTrait> Dir<F> {
 
     //     Ok(results)
     // }
+
+    /// Opens directory in default program using `open::that_detached()`
+    ///
+    /// For other methods use `open` crate directly with `&file.as_ref()`
+    #[cfg(feature = "open")]
+    pub fn open(&self) -> std::io::Result<()> {
+        open::that_detached(&self.as_ref())
+    }
 }
 
 #[cfg(all(feature = "serde", any(feature = "serde_json", feature = "serde_toml")))]
-impl<F: crate::ModelFile> Dir<F> {
+impl<F: crate::traits::ModelFile> Dir<F> {
     pub fn self_bytes_to_models<T: for<'de> serde::Deserialize<'de>>(
         &self,
         data: Vec<Vec<u8>>,
     ) -> Result<Vec<T>, F::Error> {
-        self.files.iter()
+        self.files
+            .iter()
             .zip(data)
             .map(|(f, d)| f.self_bytes_to_model(d))
             .collect()
@@ -116,6 +126,9 @@ impl<F: crate::ModelFile> Dir<F> {
     //     Ok(self.self_bytes_to_models(self.aload_files().await?)?)
     // }
 }
+
+#[cfg(feature = "open")]
+impl<F: FileTrait> crate::primitives::OpenTrait for Dir<F> {}
 
 impl<F: FileTrait> AsRef<std::path::Path> for Dir<F> {
     fn as_ref(&self) -> &std::path::Path {

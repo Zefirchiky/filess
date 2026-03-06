@@ -6,10 +6,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[cfg(feature = "async")]
-pub use crate::FileTraitAsync as _;
-pub use FileTrait as _;
-
 #[derive(Debug, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct FileBase<F: FileTrait> {
@@ -53,14 +49,17 @@ impl<F: FileTrait> FileBase<F> {
     }
 }
 
+#[cfg(feature = "open")]
+impl<F: FileTrait> crate::primitives::OpenTrait for FileBase<F> {}
+
 impl<H: FileTrait> AsRef<Path> for FileBase<H> {
     fn as_ref(&self) -> &Path {
         &self.path
     }
 }
 
-impl<H: FileTrait> From<&'static Path> for FileBase<H> {
-    fn from(path: &'static Path) -> Self {
+impl<H: FileTrait> From<&Path> for FileBase<H> {
+    fn from(path: &Path) -> Self {
         Self::new(path)
     }
 }
@@ -71,8 +70,8 @@ impl<H: FileTrait> From<PathBuf> for FileBase<H> {
     }
 }
 
-impl<H: FileTrait> From<&'static str> for FileBase<H> {
-    fn from(path: &'static str) -> Self {
+impl<H: FileTrait> From<&str> for FileBase<H> {
+    fn from(path: &str) -> Self {
         Self::new(path)
     }
 }
@@ -155,6 +154,14 @@ pub trait FileTrait:
     /// Removes the file from the disk
     fn remove(&self) -> std::io::Result<()> {
         fs::remove_file(self)
+    }
+
+    /// Opens file in default program using `open::that_detached()`
+    ///
+    /// For other methods use `open` crate directly with `&file.as_ref()`
+    #[cfg(feature = "open")]
+    fn open(&self) -> std::io::Result<()> {
+        open::that_detached(&self.as_ref())
     }
 }
 

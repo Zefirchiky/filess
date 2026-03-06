@@ -10,7 +10,7 @@ pub struct PngConfig {
 }
 
 #[cfg(feature = "image")]
-impl<'a> crate::ImageQualityConfig<'a> for PngConfig {
+impl<'a> crate::primitives::ImageQualityConfig<'a> for PngConfig {
     type Encoder = image::codecs::png::PngEncoder<&'a mut Vec<u8>>;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder {
         image::codecs::png::PngEncoder::new_with_quality(w, self.compression, self.filter)

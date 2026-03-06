@@ -33,6 +33,9 @@ some_image.save_image(&img)?;
 // Each function have their async variants (prefixed with `a`) if `async` feature is on
 let image2 = file2.aload_image().await?;
 Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
+
+// Enforce that file given should be able to save/load `serde` models. `ModelType` can also be passed
+fn needs_model(file: impl filess::traits::ModelFile);
 ```
 
 ## Features
@@ -51,5 +54,6 @@ Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
 | `rodio`      | Adds minimal rodio integration, allowing `DecodedStream` to be directly passed as source
 | `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `asave_image_custom_offload` to offload image encoding
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
+| `open`       | (Default) Adds `open` integration. You can open files or directories in default or arbitrary programs (`open`, `open_with`, etc.)
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.

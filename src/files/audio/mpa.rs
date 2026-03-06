@@ -1,11 +1,5 @@
-use crate::define_file;
+use crate::{define_audio_container_file, define_audio_file, define_file};
 
 define_file!(Mpa, ["mpa"]);
-
-#[cfg(feature = "audio")]
-impl crate::AudioFile for Mpa {
-    type Reader = symphonia::default::formats::MpaReader;
-}
-
-#[cfg(feature = "audio")]
-impl crate::AudioContainerFile for Mpa {}
+define_audio_file!(Mpa, MpaReader);
+define_audio_container_file!(Mpa);

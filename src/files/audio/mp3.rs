@@ -1,14 +1,5 @@
-use crate::define_file;
+use crate::{define_audio_codecs_file, define_audio_file, define_file};
 
 define_file!(Mp3, ["mp3"]);
-
-#[cfg(feature = "audio")]
-impl crate::AudioFile for Mp3 {
-    type Reader = symphonia::default::formats::MpaReader;
-}
-
-#[cfg(feature = "audio")]
-impl crate::AudioCodecsFile for Mp3 {
-    type Decoder = symphonia::default::codecs::MpaDecoder;
-    fn codec_type() -> symphonia::core::codecs::CodecType { symphonia::core::codecs::CODEC_TYPE_MP3 }
-}
+define_audio_file!(Mp3, MpaReader);
+define_audio_codecs_file!(Mp3, MpaDecoder, CODEC_TYPE_MP3);

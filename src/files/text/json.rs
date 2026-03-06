@@ -1,9 +1,9 @@
 #[cfg(feature = "serde_json")]
-pub use crate::ModelFile;
+use crate::traits::ModelFile;
 use crate::define_file;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ModelJsonIoError {
+pub enum JsonModelError {
     #[cfg(feature = "serde_json")]
     #[error("Seder Error: {0}")]
     Serde(#[from] serde_json::Error),
@@ -12,13 +12,13 @@ pub enum ModelJsonIoError {
 }
 
 #[cfg(feature = "serde_json")]
-impl crate::ModelIoError for ModelJsonIoError {}
+impl crate::errors::ModelIoError for JsonModelError {}
 
 define_file!(Json, ["json"], b"{}");
 
 #[cfg(feature = "serde_json")]
 impl ModelFile for Json {
-    type Error = ModelJsonIoError;
+    type Error = JsonModelError;
     
     fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error> {
         Ok(serde_json::from_slice(&data)?)
@@ -95,7 +95,7 @@ mod json {
 mod async_tests {
     use std::env::temp_dir;
 
-    use crate::{FileTraitAsync, Temporary};
+    use crate::{primitives::FileTraitAsync, Temporary};
 
     use super::*;
 
@@ -175,7 +175,7 @@ mod json_model {
 
 #[cfg(all(test, feature = "async"))]
 mod json_model_async {
-    use crate::{FileTraitAsync, Temporary, test_assets::{User, get_temp_path}};
+    use crate::{primitives::FileTraitAsync, Temporary, test_assets::{User, get_temp_path}};
 
     use super::*;
 

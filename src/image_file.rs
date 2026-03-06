@@ -1,6 +1,6 @@
 use image::{DynamicImage, ImageReader};
 
-use crate::FileTrait;
+use crate::primitives::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ImageIoError {
@@ -11,6 +11,7 @@ pub enum ImageIoError {
 }
 
 pub trait ImageFile: FileTrait {
+    /// Saves `DynamicImage` with default settings
     fn save_image(&self, img: &DynamicImage) -> Result<(), image::ImageError> {
         img.save(&self)
     }

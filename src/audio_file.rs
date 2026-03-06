@@ -5,7 +5,7 @@ use symphonia::core::io::MediaSourceStream;
 use symphonia::core::meta::Metadata;
 use symphonia::core::units::Time;
 
-use crate::FileTrait;
+use crate::primitives::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AudioError {

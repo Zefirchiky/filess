@@ -5,11 +5,10 @@ macro_rules! define_file {
         [$($ext:expr),*]
         $(,$init_bytes:expr)?
     ) => {
-        pub use crate::{FileBase, FileTrait};
+        use crate::primitives::{FileBase, FileTrait};
 
         #[derive(Debug, Default, Clone, PartialEq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-        #[doc = concat!("Returns the file extensions supported by ", stringify!($name), ".")]
         pub struct $name {
             file: FileBase<Self>,
         }
@@ -101,14 +100,14 @@ macro_rules! define_image_file {
     ) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::ImageFile for $name {
+            impl crate::traits::ImageFile for $name {
                 fn image_format() -> image::ImageFormat {
                     $format
                 }
             }
 
             #[cfg(feature = "async")]
-            impl crate::ImageFileAsync for $name {}
+            impl crate::traits::ImageFileAsync for $name {}
         };
     };
 }
@@ -118,12 +117,41 @@ macro_rules! define_custom_quality_image {
     ($name:ident, $config:ident) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::ImageQulityEncoding for $name {
+            impl crate::primitives::ImageQulityEncoding for $name {
                 type Config = $config;
             }
 
             #[cfg(feature = "async")]
-            impl crate::ImageQualityEncodingAsync for $name {}
+            impl crate::primitives::ImageQualityEncodingAsync for $name {}
         };
+    };
+}
+
+#[macro_export]
+macro_rules! define_audio_file {
+    ($name:ident, $reader:ident) => {
+        #[cfg(feature = "audio")]
+        impl crate::traits::AudioFile for $name {
+            type Reader = symphonia::default::formats::$reader;
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! define_audio_codecs_file {
+    ($name:ident, $decoder:ident, $codecs_type:ident) => {
+        #[cfg(feature = "audio")]
+        impl crate::traits::AudioCodecsFile for $name {
+            type Decoder = symphonia::default::codecs::$decoder;
+            fn codec_type() -> symphonia::core::codecs::CodecType { symphonia::core::codecs::$codecs_type }
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! define_audio_container_file {
+    ($name:ident) => {
+        #[cfg(feature = "audio")]
+        impl crate::traits::AudioContainerFile for $name {}
     };
 }

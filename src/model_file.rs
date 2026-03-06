@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::FileTrait;
+use crate::primitives::FileTrait;
 
 pub trait ModelIoError: From<std::io::Error> {}
 
@@ -39,7 +39,7 @@ pub trait ModelFile: FileTrait {
 
     #[cfg(feature = "async")]
     async fn aload_model<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
-        use crate::FileTraitAsync;
+        use crate::primitives::FileTraitAsync;
 
         self.self_bytes_to_model(self.aload().await?)
     }

@@ -8,7 +8,7 @@ pub struct JpegConfig {
 }
 
 #[cfg(feature = "image")]
-impl<'a> crate::ImageQualityConfig<'a> for JpegConfig {
+impl<'a> crate::primitives::ImageQualityConfig<'a> for JpegConfig {
     type Encoder = image::codecs::jpeg::JpegEncoder<&'a mut Vec<u8>>;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder {
         image::codecs::jpeg::JpegEncoder::new_with_quality(w, self.quality)
