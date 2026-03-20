@@ -15,12 +15,28 @@ macro_rules! match_self {
 }
 
 #[macro_export]
+macro_rules! match_self_1_arg {
+    ($self:expr, $action:ident, $argument:ident, $( $($feature:literal)? $variant:ident, )* $(@ $($panic_feature:literal)? $panic_var:ident, )* ) => {
+        match $self {
+            $(
+                $(#[cfg(feature = $feature)])?
+                Self::$variant(item) => return item.$action($argument),
+            )*
+            $(
+                $(#[cfg(feature = $panic_feature)])?
+                Self::$panic_var(_) => panic!("Operation on this type is not supported"),
+            )*
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! match_self_wrapped {
     ($self:expr, $action:ident, $( $($feature:literal)? $variant:ident, )* $(@ $($panic_feature:literal)? $panic_var:ident, )* ) => {
         match $self {
             $(
                 $(#[cfg(feature = $feature)])?
-                Self::$variant(item) => return Self::$variant(item.$action()?),
+                Self::$variant(item) => return Self::$variant(item.$action().unwrap()), // FIXME: No unwrap
             )*
             $(
                 $(#[cfg(feature = $panic_feature)])?
@@ -47,6 +63,10 @@ macro_rules! define_file_types {
         }
 
         impl FileTrait for $name {
+            fn change_path(&mut self, path: std::path::PathBuf) {
+                crate::match_self_1_arg!(self, change_path, path, $fallback, $($feature $variant,)*);
+            }
+            
             fn new(file: impl AsRef<std::path::Path>) -> Self {
                 Self::from_ext(file)
             }
@@ -59,6 +79,12 @@ macro_rules! define_file_types {
         impl AsRef<std::path::Path> for $name {
             fn as_ref(&self) -> &std::path::Path {
                 crate::match_self!(self, as_ref, $fallback, $($feature $variant,)*);
+            }
+        }
+
+        impl AsMut<std::path::Path> for $name {
+            fn as_mut(&mut self) -> &mut std::path::Path {
+                crate::match_self!(self, as_mut, $fallback, $($feature $variant,)*);
             }
         }
 

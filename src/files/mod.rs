@@ -1,3 +1,5 @@
+//! All the file types and their needed structs
+
 pub mod audio;
 mod audio_file;
 mod file;

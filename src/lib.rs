@@ -1,3 +1,11 @@
+//! Simplified file primitives.
+//! 
+//! `Filess` should be used to enforce file types needed.
+//! 
+//! It was designed to be lightweight, with all integrations being optional.
+//! 
+//! Each file type has it's own feature, which is the reason for so many feature flags.
+
 #![deny(unreachable_pub)]
 #![allow(refining_impl_trait, async_fn_in_trait)]
 #[cfg(feature = "audio")]

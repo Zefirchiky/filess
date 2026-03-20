@@ -1,3 +1,7 @@
+//! File types are convenience enums of all the types by categories.
+//! 
+//! Use this instead of boxed dynamic types.
+
 use crate::{define_file_types, primitives::FileTrait};
 
 define_file_types! {

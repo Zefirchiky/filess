@@ -22,6 +22,10 @@ macro_rules! define_file {
         }
 
         impl FileTrait for $name {
+            fn change_path(&mut self, path: std::path::PathBuf) {
+                self.file.path = path
+            }
+            
             #[doc = concat!("Creates new ", stringify!($name), ".",
                 "\n\n#Panics")]
             fn new(path: impl AsRef<std::path::Path>) -> Self {
@@ -44,6 +48,12 @@ macro_rules! define_file {
         impl AsRef<std::path::Path> for $name {
             fn as_ref(&self) -> &std::path::Path {
                 &self
+            }
+        }
+
+        impl AsMut<std::path::Path> for $name {
+            fn as_mut(&mut self) -> &mut std::path::Path {
+                &mut self.file
             }
         }
 

@@ -1,9 +1,5 @@
 use std::{
-    fmt::Debug,
-    fs::{self, create_dir_all},
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
-    path::{Path, PathBuf},
+    ffi::OsStr, fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf}
 };
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -58,6 +54,12 @@ impl<H: FileTrait> AsRef<Path> for FileBase<H> {
     }
 }
 
+impl<H: FileTrait> AsMut<Path> for FileBase<H> {
+    fn as_mut(&mut self) -> &mut Path {
+        &mut self.path
+    }
+}
+
 impl<H: FileTrait> From<&Path> for FileBase<H> {
     fn from(path: &Path) -> Self {
         Self::new(path)
@@ -96,8 +98,9 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
 }
 
 pub trait FileTrait:
-    Debug + Clone + Default + From<PathBuf> + From<&'static str> + AsRef<Path>
+    Debug + Clone + Default + From<PathBuf> + From<&'static str> + AsRef<Path> + AsMut<Path>
 {
+    fn change_path(&mut self, path: PathBuf);
     /// Creates new file
     fn new(path: impl AsRef<Path>) -> Self;
     /// Initial file bytes, if needed
@@ -154,6 +157,37 @@ pub trait FileTrait:
     /// Removes the file from the disk
     fn remove(&self) -> std::io::Result<()> {
         fs::remove_file(self)
+    }
+    
+    /// Corresponds to `fs::copy`.
+    /// 
+    /// Copies file to the new path, you will still have this instance.
+    /// New file instance will be returned.
+    fn copy(&self, path: &impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::copy(self, path)?;
+        Ok(Self::new(path))
+        
+    }
+    
+    /// Corresponds to `fs::rename`.
+    /// 
+    /// Moves the file to the new path, you will still have this instance.
+    /// New file instance will be returned.
+    fn rename(&self, path: &impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::rename(self, path)?;
+        Ok(Self::new(path))
+    }
+    
+    /// Changes this instance's name.
+    /// 
+    /// Different from `fs::rename` in that only the filename will be changed, it will stay in the same directory.
+    /// 
+    /// Changes this instance.
+    fn rename_file(&mut self, name: &impl AsRef<OsStr>) -> std::io::Result<()> {
+        let parent = self.as_ref().parent();
+        fs::rename(&self, &parent.expect("It's a file, can't be root").join(PathBuf::from(name.as_ref())))?;
+        self.change_path(self.as_ref().with_file_name(name));
+        Ok(())
     }
 
     /// Opens file in default program using `open::that_detached()`
