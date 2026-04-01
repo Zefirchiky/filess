@@ -62,6 +62,13 @@ pub enum ModelType {
 
 #[cfg(feature = "_any_serde_model")]
 impl FileTrait for ModelType {
+    fn change_path(&mut self, path: std::path::PathBuf) {
+        crate::match_self_1_arg!(self, change_path, path,
+            "serde_json" Json,
+            "serde_toml" Toml,
+        );
+    }
+    
     fn new(path: impl AsRef<std::path::Path>) -> Self {
         Self::from_ext(path).expect("Must be one of the model formats")
     }
@@ -75,6 +82,16 @@ impl FileTrait for ModelType {
 impl AsRef<std::path::Path> for ModelType {
     fn as_ref(&self) -> &std::path::Path {
         crate::match_self!(self, as_ref,
+            "serde_json" Json,
+            "serde_toml" Toml,
+        );
+    }
+}
+
+#[cfg(feature = "_any_serde_model")]
+impl AsMut<std::path::Path> for ModelType {
+    fn as_mut(&mut self) -> &mut std::path::Path {
+        crate::match_self!(self, as_mut,
             "serde_json" Json,
             "serde_toml" Toml,
         );
