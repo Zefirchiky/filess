@@ -15,23 +15,23 @@ keywords = [
 categories = ["filesystem"]
 
 [dependencies]
-image = { version = "0.25.9", optional = true, default-features = false }
-open = { version = "5.3.3", optional = true }
+image = { version = "0.25.10", optional = true, default-features = false }
+open = { version = "5.3.5", optional = true }
 rodio = { version = "0.22.2", default-features = false, optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
-serde_json = { version = "1.0.149", optional = true }
-serde_toml = { package = "toml", version = "1.0.4", optional = true, features = ["fast_hash"] }
+serde_json = { version = "1.0.150", optional = true }
+serde_toml = { package = "toml", version = "1.1.2", optional = true, features = ["fast_hash"] }
 symphonia = { version = "0.5.5", optional = true, default-features = false }
 thiserror = "2.0.18"
-tokio = { version = "1.50.0", default-features = false, features = ["fs", "parking_lot"], optional = true }
+tokio = { version = "1.52.3", default-features = false, features = ["fs", "parking_lot"], optional = true }
 
 [dev-dependencies]
-tokio = { version = "1.50.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 
 [features]
-# default = ["all-files", "rayon", "open"]
+default = ["all-files", "rayon", "open"]
 # default = ["txt", "md", "toml", "serde_toml", "serde", "all-images", "all-audio", "rayon"]
-default = ["all-files", "serde", "serde_json", "serde_toml", "image", "async", "rayon", "symphonia-simd", "rodio", "open"]
+# default = ["all-files", "serde", "serde_json", "serde_toml", "image", "async", "rayon", "symphonia-simd", "rodio", "open"]
 # default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
 
 all-files = ["all-text", "all-images", "all-audio"]
