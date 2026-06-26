@@ -1,5 +1,7 @@
+// use filess::traits::FileTrait;
+
 // fn main() {
-//     fn this<F: filess::primitives::AudioFile>() {
-//         filess::
+//     fn this() {
+//         filess::Txt::new("here.txt").save(&String::from("asldjfosjan"));
 //     }
 // }

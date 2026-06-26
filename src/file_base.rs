@@ -136,11 +136,11 @@ pub trait FileTrait:
     /// Saves data to the file.
     ///
     /// File will be created if it didn't exist.
-    fn save(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
+    fn save(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
         if let Some(parent) = self.as_ref().parent() {
             create_dir_all(parent)?
         }
-        fs::write(&self.as_ref(), data)?;
+        fs::write(self.as_ref(), data)?;
         Ok(())
     }
 
@@ -151,7 +151,7 @@ pub trait FileTrait:
         if !self.as_ref().try_exists()? {
             self.create()?;
         }
-        fs::read(&self.as_ref())
+        fs::read(self.as_ref())
     }
 
     /// Removes the file from the disk
@@ -163,8 +163,8 @@ pub trait FileTrait:
     /// 
     /// Copies file to the new path, you will still have this instance.
     /// New file instance will be returned.
-    fn copy(&self, path: &impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::copy(self, path)?;
+    fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::copy(self, &path)?;
         Ok(Self::new(path))
         
     }
@@ -173,8 +173,8 @@ pub trait FileTrait:
     /// 
     /// Moves the file to the new path, you will still have this instance.
     /// New file instance will be returned.
-    fn rename(&self, path: &impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::rename(self, path)?;
+    fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::rename(self, &path)?;
         Ok(Self::new(path))
     }
     
@@ -183,7 +183,7 @@ pub trait FileTrait:
     /// Different from `fs::rename` in that only the filename will be changed, it will stay in the same directory.
     /// 
     /// Changes this instance.
-    fn rename_file(&mut self, name: &impl AsRef<OsStr>) -> std::io::Result<()> {
+    fn rename_file(&mut self, name: impl AsRef<OsStr>) -> std::io::Result<()> {
         let parent = self.as_ref().parent();
         fs::rename(&self, &parent.expect("It's a file, can't be root").join(PathBuf::from(name.as_ref())))?;
         self.change_path(self.as_ref().with_file_name(name));
@@ -195,7 +195,7 @@ pub trait FileTrait:
     /// For other methods use `open` crate directly with `&file.as_ref()`
     #[cfg(feature = "open")]
     fn open(&self) -> std::io::Result<()> {
-        open::that_detached(&self.as_ref())
+        open::that_detached(self.as_ref())
     }
 }
 
@@ -218,7 +218,7 @@ pub trait FileTraitAsync: FileTrait {
         Ok(())
     }
 
-    async fn asave(&self, data: &impl AsRef<[u8]>) -> std::io::Result<()> {
+    async fn asave(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
         use tokio::fs;
         if let Some(parent) = self.as_ref().parent() {
             fs::create_dir_all(parent).await?
