@@ -16,6 +16,11 @@ impl<'a> crate::primitives::ImageQualityConfig<'a> for AvifConfig {
     }
 }
 
-define_file!(Avif, ["avif"]);
+define_file!(
+    Avif,
+    "avif",
+    ["image/avif", "image/avif-sequence"],
+    ["avif"]
+);
 define_image_file!(Avif, image::ImageFormat::Avif);
 define_custom_quality_image!(Avif, AvifConfig);

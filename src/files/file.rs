@@ -1,3 +1,3 @@
 use crate::define_file;
 
-define_file!(File, [""]);
+define_file!(File, "", [], [""]);

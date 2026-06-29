@@ -1,6 +1,6 @@
 [package]
 name = "filess"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
@@ -16,6 +16,7 @@ categories = ["filesystem"]
 
 [dependencies]
 image = { version = "0.25.10", optional = true, default-features = false }
+infer = { version = "0.19.0", optional = true }
 open = { version = "5.3.5", optional = true }
 rodio = { version = "0.22.2", default-features = false, optional = true }
 serde = { version = "1.0.228", features = ["derive"], optional = true }
@@ -29,39 +30,41 @@ tokio = { version = "1.52.3", default-features = false, features = ["fs", "parki
 tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 
 [features]
-default = ["all-files", "rayon", "open"]
+default = ["all-files", "base"]
 # default = ["txt", "md", "toml", "serde_toml", "serde", "all-images", "all-audio", "rayon"]
-# default = ["all-files", "serde", "serde_json", "serde_toml", "image", "async", "rayon", "symphonia-simd", "rodio", "open"]
+# default = ["all-files", "serde", "serde_json", "serde_toml", "image", "async", "symphonia-simd", "rodio", "base"]
 # default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
+
+base = ["rayon", "open", "infer"]   # Small, mostly QOL crates
 
 all-files = ["all-text", "all-images", "all-audio"]
 all-text = ["json", "toml", "md", "txt"]
 all-images = ["jpeg", "png", "webp", "avif", "tiff", "gif", "bmp", "exr", "ff", "hdr", "ico", "pnm", "qoi", "tga"]
 all-audio = ["ogg", "mkv", "wav", "aiff", "flac", "mp4", "mp3", "mp2", "mp1", "mpa", "alac"]
 
-json = ["_any_text", "_any_model"]
-toml = ["_any_text", "_any_model"]
-md = ["_any_text"]
-txt = ["_any_text"]
+json =  ["_any_text", "_any_model"]
+toml =  ["_any_text", "_any_model"]
+md =    ["_any_text"]
+txt =   ["_any_text"]
 
-jpeg = ["_any_image", "image?/jpeg"]
-png = ["_any_image", "image?/png"]
-webp = ["_any_image", "image?/webp"]
-avif = ["_any_image", "image?/avif"]
-tiff = ["_any_image", "image?/tiff"]
-gif = ["_any_image", "image?/gif"]
-bmp = ["_any_image", "image?/bmp"]
-exr = ["_any_image", "image?/exr"]
-ff = ["_any_image", "image?/ff"]
-hdr = ["_any_image", "image?/hdr"]
-ico = ["_any_image", "image?/ico"]
-pnm = ["_any_image", "image?/pnm"]
-qoi = ["_any_image", "image?/qoi"]
-tga = ["_any_image", "image?/tga"]
+jpeg =  ["_any_image", "image?/jpeg"]
+png =   ["_any_image", "image?/png"]
+webp =  ["_any_image", "image?/webp"]
+avif =  ["_any_image", "image?/avif"]
+tiff =  ["_any_image", "image?/tiff"]
+gif =   ["_any_image", "image?/gif"]
+bmp =   ["_any_image", "image?/bmp"]
+exr =   ["_any_image", "image?/exr"]
+ff =    ["_any_image", "image?/ff"]
+hdr =   ["_any_image", "image?/hdr"]
+ico =   ["_any_image", "image?/ico"]
+pnm =   ["_any_image", "image?/pnm"]
+qoi =   ["_any_image", "image?/qoi"]
+tga =   ["_any_image", "image?/tga"]
 
 # TODO: might need to refactor, change to specific symphonia flags
-ogg = ["_any_audio", "symphonia?/ogg", "symphonia?/vorbis", "symphonia?/flac", "symphonia?/pcm"]
-mkv = [
+ogg =   ["_any_audio", "symphonia?/ogg", "symphonia?/vorbis", "symphonia?/flac", "symphonia?/pcm"]
+mkv =   [
     "_any_audio",
     "symphonia?/mkv",
     "symphonia?/vorbis",
@@ -70,15 +73,15 @@ mkv = [
     "symphonia?/mp3",
     "symphonia?/aac"
 ]
-wav = ["_any_audio", "symphonia?/wav", "symphonia?/pcm"]
-aiff = ["_any_audio", "symphonia?/aiff", "symphonia?/pcm"]
-flac = ["_any_audio", "symphonia?/flac"]
-mp4 = ["_any_audio", "symphonia?/isomp4", "symphonia?/aac", "symphonia?/alac", "symphonia?/mp3"]
-mp3 = ["_any_audio", "symphonia?/mp3"]
-mp2 = ["_any_audio", "symphonia?/mp2"]
-mp1 = ["_any_audio", "symphonia?/mp1"]
-mpa = ["_any_audio", "symphonia?/mpa", "symphonia?/mp3"]
-alac = ["_any_audio", "symphonia?/caf", "symphonia?/alac", "symphonia?/isomp4"]
+wav =   ["_any_audio", "symphonia?/wav", "symphonia?/pcm"]
+aiff =  ["_any_audio", "symphonia?/aiff", "symphonia?/pcm"]
+flac =  ["_any_audio", "symphonia?/flac"]
+mp4 =   ["_any_audio", "symphonia?/isomp4", "symphonia?/aac", "symphonia?/alac", "symphonia?/mp3"]
+mp3 =   ["_any_audio", "symphonia?/mp3"]
+mp2 =   ["_any_audio", "symphonia?/mp2"]
+mp1 =   ["_any_audio", "symphonia?/mp1"]
+mpa =   ["_any_audio", "symphonia?/mpa", "symphonia?/mp3"]
+alac =  ["_any_audio", "symphonia?/caf", "symphonia?/alac", "symphonia?/isomp4"]
 
 _any_text = []
 _any_model = []
@@ -97,3 +100,4 @@ audio = ["dep:symphonia"]
 symphonia-simd = ["audio", "symphonia/opt-simd"]
 rodio = ["audio", "dep:rodio"]
 open = ["dep:open"]
+infer = ["dep:infer"]

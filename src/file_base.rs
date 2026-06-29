@@ -109,6 +109,8 @@ pub trait FileTrait:
     }
     /// Possible file extension that will be forced
     fn ext() -> &'static [&'static str];
+    fn ext_name() -> &'static str;
+    fn mime_type() -> &'static [&'static str];
 
     /// Returns `std::fs::File` for this `File`
     fn as_file(&self) -> std::io::Result<fs::File> {
@@ -192,10 +194,31 @@ pub trait FileTrait:
 
     /// Opens file in default program using `open::that_detached()`
     ///
-    /// For other methods use `open` crate directly with `&file.as_ref()`
+    /// For other methods use `open` crate directly with `file.as_ref()`
     #[cfg(feature = "open")]
     fn open(&self) -> std::io::Result<()> {
         open::that_detached(self.as_ref())
+    }
+
+    #[cfg(feature = "infer")]
+    fn infer(&self) -> std::io::Result<Option<infer::Type>> {
+        Ok(infer::get(&self.load()?))
+    }
+
+    #[cfg(feature = "infer")]
+    fn is_correct_data(&self) -> std::io::Result<bool> {
+        if let Some(t) = self.infer()? {
+            Ok(Self::ext().contains(&t.extension()))
+        } else {
+            Ok(false)
+        }
+    }
+
+    /// Enforces file data to be of file type
+    #[cfg(feature = "infer")]
+    fn enforce(&self) -> std::io::Result<()> {
+        assert!(self.is_correct_data()?, "{:?} contains incorrect data. Inferred data type: {:?}", self, self.infer().unwrap());
+        Ok(())
     }
 }
 
@@ -236,6 +259,27 @@ pub trait FileTraitAsync: FileTrait {
 
     async fn aremove(&self) -> std::io::Result<()> {
         tokio::fs::remove_file(self).await
+    }
+
+    #[cfg(feature = "infer")]
+    async fn ainfer(&self) -> std::io::Result<Option<infer::Type>> {
+        Ok(infer::get(&self.aload().await?))
+    }
+
+    #[cfg(feature = "infer")]
+    async fn ais_correct_data(&self) -> std::io::Result<bool> {
+        if let Some(t) = self.ainfer().await? {
+            Ok(Self::ext().contains(&t.extension()))
+        } else {
+            Ok(false)
+        }
+    }
+
+    /// Enforces file data to be of file type
+    #[cfg(feature = "infer")]
+    async fn aenforce(&self) -> std::io::Result<()> {
+        assert!(self.ais_correct_data().await?, "{:?} contains incorrect data. Inferred data type: {:?}", self, self.ainfer().await.unwrap());
+        Ok(())
     }
 }
 

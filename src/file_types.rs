@@ -24,6 +24,17 @@ define_file_types! {
     "pnm"  Pnm,
     "qoi"  Qoi,
     "tga"  Tga,
+    "ogg"  Ogg,
+    "mkv"  Mkv,
+    "flac" Flac,
+    "wav"  Wav,
+    "aiff" Aiff,
+    "mp4"  Mp4,
+    "mp3"  Mp3,
+    "mp2"  Mp2,
+    "mp1"  Mp1,
+    "mpa"  Mpa,
+    "alac" Alac,
 }
 
 define_file_types! {
@@ -74,6 +85,14 @@ impl FileTrait for ModelType {
     }
 
     fn ext() -> &'static [&'static str] {
+        &[]
+    }
+
+    fn ext_name() -> &'static str {
+        ""
+    }
+
+    fn mime_type() -> &'static [&'static str] {
         &[]
     }
 }

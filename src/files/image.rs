@@ -1,6 +1,6 @@
 use crate::define_file;
 
-define_file!(Image, [""]);
+define_file!(Image, "", [], [""]);
 
 #[cfg(feature = "image")]
 impl crate::traits::ImageFile for Image {

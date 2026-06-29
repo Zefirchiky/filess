@@ -1,6 +1,6 @@
+use crate::define_file;
 #[cfg(feature = "serde_json")]
 use crate::traits::ModelFile;
-use crate::define_file;
 
 #[derive(Debug, thiserror::Error)]
 pub enum JsonModelError {
@@ -14,16 +14,39 @@ pub enum JsonModelError {
 #[cfg(feature = "serde_json")]
 impl crate::errors::ModelIoError for JsonModelError {}
 
-define_file!(Json, ["json"], b"{}");
+define_file!(
+    Json,
+    "json",
+    [
+        "text/json",
+        "text/javascript",
+        "application/json",
+        "application/vnd.api+json",
+        "application/opencomic+json",
+        "application/jsonl",
+        "application/ld+json",
+        "application/yaml",
+        "application/octet-stream",
+        "application/vnd.maxar.archive.3tz+zip",
+        "application/vnd.citationstyles.csl+json",
+        "application/activity+json",
+        "image/x-lottie+json",
+        "video/lottie+json"
+    ],
+    ["json"],
+    b"{}"
+);
 
 #[cfg(feature = "serde_json")]
 impl ModelFile for Json {
     type Error = JsonModelError;
-    
-    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error> {
+
+    fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(
+        data: Vec<u8>,
+    ) -> Result<T, Self::Error> {
         Ok(serde_json::from_slice(&data)?)
     }
-    
+
     fn model_to_bytes(model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         Ok(serde_json::to_vec_pretty(model)?)
     }
@@ -59,7 +82,7 @@ mod json {
         let dir = temp_dir();
         let file_path = dir.join("test1.json");
         let handler = Temporary::new(Json::new(&file_path));
-        
+
         handler.create().expect("Failed to create file");
         assert!(file_path.exists());
     }
@@ -73,7 +96,7 @@ mod json {
 
         handler.save(data).expect("Save failed");
         let loaded = handler.load().expect("Load failed");
-        
+
         assert_eq!(loaded, data);
     }
 
@@ -85,7 +108,7 @@ mod json {
 
         // File doesn't exist yet, load should create it with Json::file_init_bytes()
         let loaded = handler.load().expect("Load failed on new file");
-        
+
         assert_eq!(loaded, Json::file_init_bytes().unwrap());
         assert!(file_path.exists());
     }
@@ -95,7 +118,7 @@ mod json {
 mod async_tests {
     use std::env::temp_dir;
 
-    use crate::{primitives::FileTraitAsync, Temporary};
+    use crate::{Temporary, primitives::FileTraitAsync};
 
     use super::*;
 
@@ -106,8 +129,7 @@ mod async_tests {
         let handler = Temporary::new(Json::new(&file_path));
         let data = b"async data";
 
-        handler.asave
-            (&data).await.expect("Async save failed");
+        handler.asave(&data).await.expect("Async save failed");
         let loaded = handler.aload().await.expect("Async load failed");
 
         assert_eq!(loaded, data);
@@ -146,17 +168,23 @@ mod json_from {
 
 #[cfg(all(test, feature = "serde_json"))]
 mod json_model {
-    use crate::{Temporary, test_assets::{User, get_temp_path}};
+    use crate::{
+        Temporary,
+        test_assets::{User, get_temp_path},
+    };
 
     use super::*;
 
     #[test]
     fn bytes_conversion() {
-        let user = User { name: "Alice".into(), age: 30 };
-        
+        let user = User {
+            name: "Alice".into(),
+            age: 30,
+        };
+
         let bytes = Json::model_to_bytes(&user).unwrap();
         let decoded: User = Json::bytes_to_model(bytes).unwrap();
-        
+
         assert_eq!(user, decoded);
     }
 
@@ -164,18 +192,25 @@ mod json_model {
     fn save_and_load_model() {
         let path = get_temp_path("usr");
         let handler = Temporary::new(Json::new(&path));
-        let model = User { name: "Alice".into(), age: 30 };
+        let model = User {
+            name: "Alice".into(),
+            age: 30,
+        };
 
         handler.save_model(&model).expect("Save model failed");
         let loaded: User = handler.load_model().expect("Load model failed");
-        
+
         assert_eq!(model, loaded);
     }
 }
 
 #[cfg(all(test, feature = "async"))]
 mod json_model_async {
-    use crate::{primitives::FileTraitAsync, Temporary, test_assets::{User, get_temp_path}};
+    use crate::{
+        Temporary,
+        primitives::FileTraitAsync,
+        test_assets::{User, get_temp_path},
+    };
 
     use super::*;
 
@@ -183,11 +218,14 @@ mod json_model_async {
     async fn model_lifecycle_async() {
         let path = get_temp_path("async_lifecycle");
         let handler = Temporary::new(Json::new(&path));
-        let user = User { name: "Async".into(), age: 10 };
+        let user = User {
+            name: "Async".into(),
+            age: 10,
+        };
 
         handler.asave_model(&user).await.expect("Async save failed");
         let loaded: User = handler.aload_model().await.expect("Async load failed");
-        
+
         assert_eq!(user, loaded);
         let _ = handler.aremove().await;
     }

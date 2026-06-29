@@ -15,7 +15,17 @@ impl<'a> crate::primitives::ImageQualityConfig<'a> for JpegConfig {
     }
 }
 
-define_file!(Jpeg, ["jpeg", "jpg", "jpe", "jif", "jfif", "gfi"]);
+define_file!(
+    Jpeg,
+    "jpeg",
+    [
+        "image/jpeg",
+        "image/jpg",
+        "application/jpg",
+        "application/x-jpg"
+    ],
+    ["jpeg", "jpg", "jpe", "jif", "jfif", "gfi"]
+);
 define_image_file!(Jpeg, image::ImageFormat::Jpeg);
 define_custom_quality_image!(Jpeg, JpegConfig);
 
@@ -24,7 +34,7 @@ define_custom_quality_image!(Jpeg, JpegConfig);
 //     use crate::ImageQualityEncodingAsync;
 
 //     use super::*;
-    
+
 //     #[test]
 //     fn macros() {
 //         Jpeg

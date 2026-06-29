@@ -1,5 +1,18 @@
 use crate::{define_audio_container_file, define_audio_file, define_file};
 
-define_file!(Mkv, ["mkv", "mka", "webm"]);
+define_file!(
+    Mkv,
+    "mkv",
+    [
+        "video/x-matroska",
+        "audio/matroska",
+        "audio/x-matroska",
+        "video/matroska",
+        "video/matroska-3d",
+        "application/octet-stream",
+        "application/x-matroska"
+    ],
+    ["mkv", "mka", "webm"]
+);
 define_audio_file!(Mkv, MkvReader);
 define_audio_container_file!(Mkv);

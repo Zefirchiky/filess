@@ -2,6 +2,8 @@
 macro_rules! define_file {
     (
         $name:ident,
+        $ext_name:expr,
+        [$($mimo:expr),*],
         [$($ext:expr),*]
         $(,$init_bytes:expr)?
     ) => {
@@ -35,6 +37,11 @@ macro_rules! define_file {
             #[doc = concat!("Returns the file extensions supported by ", stringify!($name), ".")]
             fn ext() -> &'static [&'static str] {
                 &[$($ext),*]
+            }
+
+            fn ext_name() -> &'static str { $ext_name }
+            fn mime_type() -> &'static [&'static str] {
+                &[$($mimo),*]
             }
 
             $(

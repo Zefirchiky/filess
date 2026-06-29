@@ -74,6 +74,14 @@ macro_rules! define_file_types {
             fn ext() -> &'static [&'static str] {
                 &[]
             }
+
+            fn ext_name() -> &'static str {
+                ""
+            }
+
+            fn mime_type() -> &'static [&'static str] {
+                &[]
+            }
         }
 
         impl AsRef<std::path::Path> for $name {

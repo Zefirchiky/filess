@@ -1,3 +1,3 @@
 use crate::define_file;
 
-define_file!(Audio, [""]);
+define_file!(Audio, "", [], [""]);

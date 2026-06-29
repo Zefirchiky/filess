@@ -1,6 +1,6 @@
+use crate::{define_custom_quality_image, define_file, define_image_file};
 #[cfg(feature = "image")]
 use image::codecs::png::{CompressionType, FilterType};
-use crate::{define_custom_quality_image, define_file, define_image_file};
 
 #[cfg(feature = "image")]
 #[derive(Debug, Clone, Copy)]
@@ -17,6 +17,16 @@ impl<'a> crate::primitives::ImageQualityConfig<'a> for PngConfig {
     }
 }
 
-define_file!(Png, ["png"]);
+define_file!(
+    Png,
+    "png",
+    [
+        "image/png",
+        "image/vnd.mozilla.apng",
+        "application/octet-stream",
+        "image/apng"
+    ],
+    ["png"]
+);
 define_image_file!(Png, image::ImageFormat::Png);
 define_custom_quality_image!(Png, PngConfig);
