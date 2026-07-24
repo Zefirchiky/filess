@@ -1,6 +1,6 @@
 [package]
 name = "filess"
-version = "0.6.5"
+version = "0.6.6"
 edition = "2024"
 description = "Simplified file management"
 license = "MIT OR Apache-2.0"
@@ -26,6 +26,7 @@ symphonia = { version = "0.5.5", optional = true, default-features = false }
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", default-features = false, features = ["fs", "parking_lot"], optional = true }
 trash = { version = "5.2.6", optional = true }
+walkdir = { version = "2.5.0", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
@@ -36,7 +37,7 @@ default = ["all-files", "base"]
 # default = ["all-files", "serde", "serde_json", "serde_toml", "image", "async", "symphonia-simd", "rodio", "base"]
 # default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
 
-base = ["rayon", "open", "infer", "trash"]   # Small, mostly QOL crates
+base = ["rayon", "open", "walk", "infer", "trash"]   # Small, mostly QOL crates
 
 all-files = ["all-text", "all-images", "all-audio"]
 all-text = ["json", "toml", "md", "txt"]
@@ -103,3 +104,4 @@ rodio = ["audio", "dep:rodio"]
 open = ["dep:open"]
 infer = ["dep:infer"]
 trash = ["dep:trash"]
+walk = ["dep:walkdir"]

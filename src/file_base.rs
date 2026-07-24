@@ -223,6 +223,7 @@ pub trait FileTrait:
         Ok(())
     }
 
+    /// Moves file in trash
     #[cfg(feature = "trash")]
     fn trash(&self) -> Result<(), trash::Error> {
         trash::delete(self)

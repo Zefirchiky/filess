@@ -74,6 +74,11 @@ impl<F: FileTrait> Dir<F> {
         self.files.iter().map(|f| f.load()).collect()
     }
 
+    #[cfg(feature = "walk")]
+    pub fn walk(&self) -> walkdir::WalkDir {
+        walkdir::WalkDir::new(&self)
+    }
+
     // ! AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     // #[cfg(feature = "async")]
     // pub async fn aload_files(&self) -> io::Result<Vec<Vec<u8>>> {
@@ -104,6 +109,7 @@ impl<F: FileTrait> Dir<F> {
         open::that_detached(&self.as_ref())
     }
 
+    /// Moves folder in trash
     #[cfg(feature = "trash")]
     pub fn trash(&self) -> Result<(), trash::Error> {
         trash::delete_all(self)

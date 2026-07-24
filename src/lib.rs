@@ -37,6 +37,15 @@ pub use files::*;
 pub use fs_handler::FsHandler;
 pub use temporary::Temporary;
 
+#[cfg(feature = "open")]
+pub use open;
+#[cfg(feature = "walk")]
+pub use walkdir;
+#[cfg(feature = "infer")]
+pub use infer;
+#[cfg(feature = "trash")]
+pub use trash;
+
 #[cfg(test)]
 pub(crate) mod test_assets {
     #[allow(unused)]

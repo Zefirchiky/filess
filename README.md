@@ -55,8 +55,9 @@ fn needs_model(file: impl filess::traits::ModelFile);
 | `rodio`      | Adds minimal rodio integration, allowing `DecodedStream` to be directly passed as source
 | `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `asave_image_custom_offload()` to offload image encoding
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
-| `open`       | (Default) `open` integration. You can open files or directories in default or arbitrary programs (`open()`, `open_with()`, etc.)
-| `infer`      | (Default) `infer` integration. You can enfornce that file data is of propper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
-| `trash`      | (Default) `trash` integration. You can now move files/dirs to trash, aka trash them (`trash()`)
+| `open`       | (Default) `open` integration. Open files or directories in default or arbitrary programs (`open()`, `open_with()`, etc.)
+| `walk`       | (Default) `walkdir` integration. Walk through directory (`walk()`)
+| `infer`      | (Default) `infer` integration. Enforces that file data is of propper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
+| `trash`      | (Default) `trash` integration. Move files/dirs to trash, aka trash them (`trash()`)
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.
