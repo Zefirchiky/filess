@@ -42,18 +42,21 @@ fn needs_model(file: impl filess::traits::ModelFile);
 
 | Feature      | Description
 |--------------|------------
+| `base`       | (Default) Includes basic small features, like `rayon`, `open` and `infer`
 | `all-files`  | (Default) All currently supported files, includes `all-text`, `all-images` and `all-audio`
 | `all-text`   | All currently supported text files: `Json`, `Toml`, `Md`, `Txt`
 | `all-images` | All currently supported image files: `Jpeg`, `Png`, `WebP`, `Avif`, `Tiff`, `Gif`, `Bmp`, `Exr`, `Ff`, `Hdr`, `Ico`, `Pnm`, `Qoi`, `Tga`
 | `all-audio`  | All currently supported audio files: `Ogg`, `Mkv`, `Wav`, `Flac`, `Mp4`, `Mp3`, `Mp2`, `Mp1`, `Mpa`, `Alac`
-| `serde`      | `Serde` integration, adds `save_model` and `load_model` for `Json` and `Toml`. Use `serde_json` and `serde_toml` to activate integrations for specific files (due to limitations of cargo)
-| `image`      | `Image` integration, adds `save_image` and `load_image` to all image formats, and `save_image_custom` to formats where `image` supports custom quality
+| `serde`      | `serde` integration, adds `save_model()` and `load_model()` for `Json` and `Toml`. Use `serde_json` and `serde_toml` to activate integrations for specific files (due to limitations of cargo)
+| `image`      | `image` integration, adds `save_image()` and `load_image()` to all image formats, and `save_image_custom()` to formats where `image` supports custom quality
 | `image-nasm` | Turns on `nasm` feature of `image`
-| `audio`      | `Symphonia` integration, adds `load_audio` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
+| `audio`      | `symphonia` integration, adds `load_audio()` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
 | `symphonia-simd`| Turns on `opt-simd` feature of `symphonia`
 | `rodio`      | Adds minimal rodio integration, allowing `DecodedStream` to be directly passed as source
-| `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `asave_image_custom_offload` to offload image encoding
+| `async`      | Add async versions of all methods. Uses minimal `tokio` for fs. Adds `asave_image_custom_offload()` to offload image encoding
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
-| `open`       | (Default) Adds `open` integration. You can open files or directories in default or arbitrary programs (`open`, `open_with`, etc.)
+| `open`       | (Default) `open` integration. You can open files or directories in default or arbitrary programs (`open()`, `open_with()`, etc.)
+| `infer`      | (Default) `infer` integration. You can enfornce that file data is of propper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
+| `trash`      | (Default) `trash` integration. You can now move files/dirs to trash, aka trash them (`trash()`)
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.

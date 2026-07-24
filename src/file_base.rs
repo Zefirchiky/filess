@@ -214,11 +214,18 @@ pub trait FileTrait:
         }
     }
 
-    /// Enforces file data to be of file type
+    /// Enforces file data to be of file type.
+    /// 
+    /// It's an io operation, use `aenforce` if you don't want this operation to lag the program.
     #[cfg(feature = "infer")]
     fn enforce(&self) -> std::io::Result<()> {
         assert!(self.is_correct_data()?, "{:?} contains incorrect data. Inferred data type: {:?}", self, self.infer().unwrap());
         Ok(())
+    }
+
+    #[cfg(feature = "trash")]
+    fn trash(&self) -> Result<(), trash::Error> {
+        trash::delete(self)
     }
 }
 

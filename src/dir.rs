@@ -103,6 +103,11 @@ impl<F: FileTrait> Dir<F> {
     pub fn open(&self) -> std::io::Result<()> {
         open::that_detached(&self.as_ref())
     }
+
+    #[cfg(feature = "trash")]
+    pub fn trash(&self) -> Result<(), trash::Error> {
+        trash::delete_all(self)
+    }
 }
 
 #[cfg(all(feature = "serde", any(feature = "serde_json", feature = "serde_toml")))]
