@@ -77,7 +77,7 @@ impl<F: FsElement> crate::primitives::AsyncFsElement for Dir<F> {
     }
 }
 
-impl<F: FileTrait> Dir<F> {
+impl<F: FsElement> Dir<F> {
     /// Will create a this directory and recursively create all child files and directories.
     ///
     /// It is recommended to use async version of this method
@@ -90,43 +90,41 @@ impl<F: FileTrait> Dir<F> {
         Ok(())
     }
 
-    #[cfg(feature = "async")]
-    pub async fn acreate_all(&self) -> io::Result<()> {
-        self.acreate().await?;
-        Ok(())
-    }
-
-    #[cfg(feature = "async")]
-    pub async fn acreate(&self) -> io::Result<()> {
-        tokio::fs::create_dir_all(&self).await
-    }
-
-    /// Adds a file to this directory. Path should be relative to the folder
-    pub fn add(&mut self, file: F) {
+    /// Push a `F` to this directory. Path should be relative to the folder
+    pub fn push(&mut self, file: F) {
         self.elements.push(file)
     }
 
-    pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
-        self.elements.iter().map(|f| f.load()).collect()
-    }
-
+    /// Walks through dir with `walkdir`
     #[cfg(feature = "walk")]
     pub fn walk(&self) -> walkdir::WalkDir {
         walkdir::WalkDir::new(&self)
     }
 
-    /// Opens directory in default program using `open::that_detached()`
-    ///
-    /// For other methods use `open` crate directly with `&file.as_ref()`
-    #[cfg(feature = "open")]
-    pub fn open(&self) -> std::io::Result<()> {
-        open::that_detached(&self.as_ref())
-    }
-
     /// Moves folder in trash
     #[cfg(feature = "trash")]
-    pub fn trash(&self) -> Result<(), trash::Error> {
-        trash::delete_all(self)
+    pub fn trash_files(&self) -> Result<(), trash::Error> {
+        trash::delete(self)
+    }
+}
+
+impl<F: crate::primitives::FileTrait> Dir<F> {
+    pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
+        self.elements.iter().map(|f| f.load()).collect()
+    }
+}
+
+#[cfg(feature = "async")]
+impl<F: crate::primitives::AsyncFsElement> Dir<F> {
+    /// Creates all the elements inside the folder, including the folder
+    pub async fn acreate_all(&self) -> io::Result<()> {
+        use crate::fs_element::AsyncFsElement;
+
+        self.acreate().await?;
+        for el in &self.elements {
+            el.acreate().await?;
+        }
+        Ok(())
     }
 }
 
@@ -172,6 +170,7 @@ impl<F: crate::traits::ModelFile + 'static> Dir<F> {
         Ok(self.self_bytes_to_models(self.load_files()?)?)
     }
 
+    #[cfg(feature = "async")]
     pub async fn aload_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
         Ok(self.self_bytes_to_models(self.aload_files().await?)?)
     }

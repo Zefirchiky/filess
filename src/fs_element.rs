@@ -19,12 +19,14 @@ pub trait FsElement: FsElementBoundries {
     fn create(&self) -> std::io::Result<()>;
     /// Removes file or dir from file system
     fn remove(&self) -> std::io::Result<()>;
+    
     /// Copies file or dir in file system
     fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
         fs::copy(self, &path)?;
         Ok(Self::new(path))
     }
-    /// Renames the file or a dir in a file system
+    
+    /// Renames the file or dir in a file system
     /// Corresponds to `fs::rename`
     fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
         fs::rename(self, &path)?;
@@ -33,6 +35,7 @@ pub trait FsElement: FsElementBoundries {
     /// Changes underlying `PathBuf`
     /// Different from `Self::rename` in that it does NOT change file or dir in the file system
     fn rename_file(&mut self, name: impl AsRef<Path>);
+    
     /// Moves file in trash
     #[cfg(feature = "trash")]
     fn trash(&self) -> Result<(), trash::Error> {
