@@ -2,10 +2,11 @@
 pub use crate::audio_file::{
     DecodedStreamParams, DynamicDecoder,
 };
-pub use crate::file_base::*;
+pub use crate::file_base::{AsyncFileTrait, FileBase, FileTrait, FileCreationError};
+pub use crate::fs_element::*;
 #[cfg(feature = "image")]
 pub use crate::image_file::{
-    ImageQualityConfig, ImageQualityEncodingAsync, ImageQulityEncoding,
+    ImageQualityConfig, AsyncImageQualityEncoding, ImageQualityEncoding,
 };
 
 #[cfg(feature = "open")]

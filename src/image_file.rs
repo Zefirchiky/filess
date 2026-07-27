@@ -24,11 +24,9 @@ pub trait ImageFile: FileTrait {
 }
 
 #[cfg(feature = "async")]
-pub trait ImageFileAsync: ImageFile {
+pub trait AsyncImageFile: ImageFile + crate::primitives::AsyncFileTrait {
     async fn asave_image(&self, img: &DynamicImage) -> Result<(), image::ImageError> {
         use std::io::{BufWriter, Cursor};
-
-        use crate::file_base::FileTraitAsync;
 
         let mut buf = BufWriter::new(Cursor::new(vec![]));
         img.write_to(&mut buf, image::ImageFormat::from_path(&self)?)?;
@@ -39,18 +37,19 @@ pub trait ImageFileAsync: ImageFile {
     async fn aload_image(&self) -> Result<DynamicImage, image::ImageError> {
         use std::io::{BufReader, Cursor};
 
-        use crate::file_base::FileTraitAsync;
-
         Ok(ImageReader::new(BufReader::new(Cursor::new(self.aload().await?))).decode()?)
     }
 }
+
+#[cfg(feature = "async")]
+impl<T: ImageFile + crate::primitives::AsyncFileTrait> AsyncImageFile for T {}
 
 pub trait ImageQualityConfig<'a> {
     type Encoder: image::ImageEncoder;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder;
 }
 
-pub trait ImageQulityEncoding: FileTrait {
+pub trait ImageQualityEncoding: FileTrait {
     type Config: for<'a> ImageQualityConfig<'a> + Sync + Send;
 
     /// Save image with custom quality.
@@ -69,7 +68,7 @@ pub trait ImageQulityEncoding: FileTrait {
 }
 
 #[cfg(feature = "async")]
-pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
+pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::primitives::AsyncFileTrait {
     /// Save image with custom quality.
     ///
     /// Use `asave_image_custom_offload` if this is too slow.
@@ -78,8 +77,6 @@ pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
         img: &image::DynamicImage,
         config: Self::Config,
     ) -> Result<(), ImageIoError> {
-        use crate::file_base::FileTraitAsync;
-
         let mut buf = vec![];
         img.write_with_encoder(config.get_encoder(&mut buf))?;
         self.asave(&buf).await?;
@@ -103,3 +100,6 @@ pub trait ImageQualityEncodingAsync: ImageQulityEncoding {
         (offload)(Box::new(move || self.save_image_custom(&img, config))).await
     }
 }
+
+#[cfg(feature = "async")]
+impl<T: ImageQualityEncoding + crate::primitives::AsyncFileTrait> AsyncImageQualityEncoding for T {}

@@ -1,6 +1,20 @@
 use std::{
-    ffi::OsStr, fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf}
+    ffi::OsString, fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf},
 };
+
+use crate::fs_element::FsElement;
+
+#[derive(Debug, thiserror::Error)]
+pub enum FileCreationError<F: FileTrait> {
+    #[error("Extension should be a valid UTF-8")]
+    InvalidUtf8(OsString),
+    #[error("Extension must be one of `{ext:?}` for file {0:?}, given: `{1}`", ext = F::ext())]
+    WrongExtension(PathBuf, String),
+    #[error("Extension must be one of `{ext:?}` for file {0:?}, no extension given", ext = F::ext())]
+    NoExtension(PathBuf),
+    #[error("Should be unreachable")]
+    _Phantom(F)
+}
 
 #[derive(Debug, Clone, Default, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -17,31 +31,35 @@ impl<F: FileTrait> FileBase<F> {
     ///
     /// Panics if the path is not a file or if the file does not have the correct extension.
     pub fn new(file: impl AsRef<Path>) -> Self {
+        Self::try_new(file).unwrap()
+    }
+    
+    /// Creates a new FileHandler.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the path is not a file or if the file does not have the correct extension.
+    pub fn try_new(file: impl AsRef<Path>) -> Result<Self, F::TryNewError> {
         let file = file.as_ref().to_path_buf();
 
         if !F::ext().is_empty() {
             match file.extension() {
                 Some(ext) => {
-                    let ext = ext.to_str().expect("Extension should be a valid UTF-8");
-                    assert!(
-                        F::ext().contains(&ext),
-                        "Extension must be one of `{:?}` for file {file:?}, given: `{ext}`",
-                        F::ext(),
-                    )
+                    let ext = ext.to_str().ok_or(F::TryNewError::InvalidUtf8(ext.to_owned()))?;
+                    if !F::ext().contains(&ext) {
+                        return Err(F::TryNewError::WrongExtension(file.clone(), ext.into()));
+                    }
                 }
                 None => {
-                    panic!(
-                        "Extension must be one of `{:?}` for file {file:?}, no extension given",
-                        F::ext(),
-                    )
+                    return Err(F::TryNewError::NoExtension(file.clone()));
                 }
             }
         }
 
-        Self {
+        Ok(Self {
             path: file,
             _phantom: PhantomData,
-        }
+        })
     }
 }
 
@@ -97,12 +115,13 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
     }
 }
 
-pub trait FileTrait:
-    Debug + Clone + Default + From<PathBuf> + From<&'static str> + AsRef<Path> + AsMut<Path>
-{
+pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + Default {
+    fn new(path: impl AsRef<Path>) -> Self {
+        <Self as FileTrait>::try_new(path).unwrap()
+    }
+    fn try_new(path: impl AsRef<Path>) -> Result<Self, Self::TryNewError>;
+    
     fn change_path(&mut self, path: PathBuf);
-    /// Creates new file
-    fn new(path: impl AsRef<Path>) -> Self;
     /// Initial file bytes, if needed
     fn file_init_bytes() -> Option<&'static [u8]> {
         None
@@ -115,24 +134,6 @@ pub trait FileTrait:
     /// Returns `std::fs::File` for this `File`
     fn as_file(&self) -> std::io::Result<fs::File> {
         fs::File::create(self)
-    }
-
-    /// Creates a new file.
-    ///
-    /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!
-    fn create(&self) -> std::io::Result<()> {
-        if let Some(parent) = self.as_ref().parent() {
-            create_dir_all(parent)?
-        }
-
-        match Self::file_init_bytes() {
-            Some(b) => fs::write(self, b)?,
-            None => {
-                fs::File::create(self)?;
-            }
-        };
-
-        Ok(())
     }
 
     /// Saves data to the file.
@@ -154,42 +155,6 @@ pub trait FileTrait:
             self.create()?;
         }
         fs::read(self.as_ref())
-    }
-
-    /// Removes the file from the disk
-    fn remove(&self) -> std::io::Result<()> {
-        fs::remove_file(self)
-    }
-    
-    /// Corresponds to `fs::copy`.
-    /// 
-    /// Copies file to the new path, you will still have this instance.
-    /// New file instance will be returned.
-    fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::copy(self, &path)?;
-        Ok(Self::new(path))
-        
-    }
-    
-    /// Corresponds to `fs::rename`.
-    /// 
-    /// Moves the file to the new path, you will still have this instance.
-    /// New file instance will be returned.
-    fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::rename(self, &path)?;
-        Ok(Self::new(path))
-    }
-    
-    /// Changes this instance's name.
-    /// 
-    /// Different from `fs::rename` in that only the filename will be changed, it will stay in the same directory.
-    /// 
-    /// Changes this instance.
-    fn rename_file(&mut self, name: impl AsRef<OsStr>) -> std::io::Result<()> {
-        let parent = self.as_ref().parent();
-        fs::rename(&self, &parent.expect("It's a file, can't be root").join(PathBuf::from(name.as_ref())))?;
-        self.change_path(self.as_ref().with_file_name(name));
-        Ok(())
     }
 
     /// Opens file in default program using `open::that_detached()`
@@ -215,23 +180,79 @@ pub trait FileTrait:
     }
 
     /// Enforces file data to be of file type.
-    /// 
+    ///
     /// It's an io operation, use `aenforce` if you don't want this operation to lag the program.
     #[cfg(feature = "infer")]
     fn enforce(&self) -> std::io::Result<()> {
-        assert!(self.is_correct_data()?, "{:?} contains incorrect data. Inferred data type: {:?}", self, self.infer().unwrap());
+        assert!(
+            self.is_correct_data()?,
+            "{:?} contains incorrect data. Inferred data type: {:?}",
+            self,
+            self.infer().unwrap()
+        );
+        Ok(())
+    }
+}
+
+impl<T: FileTrait> FsElement for T {
+    type TryNewError = FileCreationError<T>;
+    
+    fn try_new(path: impl AsRef<Path>) -> Result<Self, Self::TryNewError> {
+        <T as FileTrait>::try_new(path)
+    }
+
+    /// Creates a new file.
+    ///
+    /// !!! OVERWRITES CONTENT IF FILE ALREADY EXISTS !!!
+    fn create(&self) -> std::io::Result<()> {
+        if let Some(parent) = self.as_ref().parent() {
+            create_dir_all(parent)?
+        }
+
+        match Self::file_init_bytes() {
+            Some(b) => fs::write(self, b)?,
+            None => {
+                fs::File::create(self)?;
+            }
+        };
+
         Ok(())
     }
 
-    /// Moves file in trash
-    #[cfg(feature = "trash")]
-    fn trash(&self) -> Result<(), trash::Error> {
-        trash::delete(self)
+    /// Removes the file from the disk
+    fn remove(&self) -> std::io::Result<()> {
+        fs::remove_file(self)
+    }
+
+    /// Corresponds to `fs::copy`.
+    ///
+    /// Copies file to the new path.
+    /// Does not consume this file.
+    /// New file instance will be returned.
+    fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::copy(self, &path)?;
+        Ok(<Self as FileTrait>::new(path))
+    }
+    
+    /// Renames the file in a file system.
+    /// 
+    /// Corresponds to `fs::rename`.
+    fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::rename(self, &path)?;
+        Ok(<Self as FileTrait>::new(path))
+    }
+
+    /// Changes underlying `PathBuf`
+    /// 
+    /// Different from `Self::rename` in that it does NOT change file or dir in the file system
+    fn rename_file(&mut self, name: impl AsRef<Path>) {
+        self.change_path(name.as_ref().into());
     }
 }
 
 #[cfg(feature = "async")]
-pub trait FileTraitAsync: FileTrait {
+#[async_trait::async_trait]
+impl<T: FileTrait> crate::primitives::AsyncFsElement for T {
     async fn acreate(&self) -> std::io::Result<()> {
         use tokio::fs;
 
@@ -240,19 +261,28 @@ pub trait FileTraitAsync: FileTrait {
         }
 
         match Self::file_init_bytes() {
-            Some(b) => fs::write(&self, b).await?,
+            Some(b) => fs::write(self, b).await?,
             None => {
-                fs::File::create(&self).await?;
+                fs::File::create(self).await?;
             }
         }
 
         Ok(())
     }
 
+    async fn aremove(&self) -> std::io::Result<()> {
+        tokio::fs::remove_file(self).await
+    }
+}
+
+#[cfg(feature = "async")]
+impl<T: FileTrait + crate::primitives::AsyncFsElement> AsyncFileTrait for T {}
+
+#[cfg(feature = "async")]
+pub trait AsyncFileTrait: FileTrait + crate::primitives::AsyncFsElement {
     async fn asave(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
-        use tokio::fs;
         if let Some(parent) = self.as_ref().parent() {
-            fs::create_dir_all(parent).await?
+            tokio::fs::create_dir_all(parent).await?
         }
         tokio::fs::write(&self.as_ref(), data).await?;
         Ok(())
@@ -263,10 +293,6 @@ pub trait FileTraitAsync: FileTrait {
             self.acreate().await?;
         }
         tokio::fs::read(&self.as_ref()).await
-    }
-
-    async fn aremove(&self) -> std::io::Result<()> {
-        tokio::fs::remove_file(self).await
     }
 
     #[cfg(feature = "infer")]
@@ -286,10 +312,13 @@ pub trait FileTraitAsync: FileTrait {
     /// Enforces file data to be of file type
     #[cfg(feature = "infer")]
     async fn aenforce(&self) -> std::io::Result<()> {
-        assert!(self.ais_correct_data().await?, "{:?} contains incorrect data. Inferred data type: {:?}", self, self.ainfer().await.unwrap());
+        assert!(
+            self.ais_correct_data().await?,
+            "{:?} contains incorrect data. Inferred data type: {:?}",
+            self,
+            self.ainfer().await.unwrap()
+        );
         Ok(())
     }
 }
 
-#[cfg(feature = "async")]
-impl<T: FileTrait> FileTraitAsync for T {}

@@ -63,12 +63,12 @@ macro_rules! define_file_types {
         }
 
         impl FileTrait for $name {
-            fn change_path(&mut self, path: std::path::PathBuf) {
-                crate::match_self_1_arg!(self, change_path, path, $fallback, $($feature $variant,)*);
+            fn try_new(file: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
+                Ok(Self::from_ext(file))
             }
             
-            fn new(file: impl AsRef<std::path::Path>) -> Self {
-                Self::from_ext(file)
+            fn change_path(&mut self, path: std::path::PathBuf) {
+                crate::match_self_1_arg!(self, change_path, path, $fallback, $($feature $variant,)*);
             }
 
             fn ext() -> &'static [&'static str] {

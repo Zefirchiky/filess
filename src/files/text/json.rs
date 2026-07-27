@@ -57,7 +57,7 @@ impl ModelFile for Json {
 mod json {
     use std::env::temp_dir;
 
-    use crate::Temporary;
+    use crate::{Temporary, fs_element::FsElement};
 
     use super::*;
 
@@ -118,7 +118,7 @@ mod json {
 mod async_tests {
     use std::env::temp_dir;
 
-    use crate::{Temporary, primitives::FileTraitAsync};
+    use crate::{Temporary, primitives::AsyncFileTrait};
 
     use super::*;
 
@@ -207,9 +207,7 @@ mod json_model {
 #[cfg(all(test, feature = "async"))]
 mod json_model_async {
     use crate::{
-        Temporary,
-        primitives::FileTraitAsync,
-        test_assets::{User, get_temp_path},
+        Temporary, fs_element::AsyncFsElement, test_assets::{User, get_temp_path}, traits::AsyncModelFile,
     };
 
     use super::*;

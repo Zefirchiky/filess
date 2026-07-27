@@ -24,14 +24,14 @@ macro_rules! define_file {
         }
 
         impl FileTrait for $name {
-            fn change_path(&mut self, path: std::path::PathBuf) {
-                self.file.path = path
-            }
-            
             #[doc = concat!("Creates new ", stringify!($name), ".",
                 "\n\n#Panics")]
-            fn new(path: impl AsRef<std::path::Path>) -> Self {
-                Self { file: FileBase::new(path) }
+            fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
+                Ok(Self { file: FileBase::try_new(path)? })
+            }
+            
+            fn change_path(&mut self, path: std::path::PathBuf) {
+                self.file.path = path
             }
 
             #[doc = concat!("Returns the file extensions supported by ", stringify!($name), ".")]
@@ -122,9 +122,6 @@ macro_rules! define_image_file {
                     $format
                 }
             }
-
-            #[cfg(feature = "async")]
-            impl crate::traits::ImageFileAsync for $name {}
         };
     };
 }
@@ -134,12 +131,9 @@ macro_rules! define_custom_quality_image {
     ($name:ident, $config:ident) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::primitives::ImageQulityEncoding for $name {
+            impl crate::primitives::ImageQualityEncoding for $name {
                 type Config = $config;
             }
-
-            #[cfg(feature = "async")]
-            impl crate::primitives::ImageQualityEncodingAsync for $name {}
         };
     };
 }

@@ -5,7 +5,6 @@
 //! It was designed to be lightweight, with all integrations being optional.
 //! 
 //! Each file type has it's own feature, which is the reason for so many feature flags.
-
 #![deny(unreachable_pub)]
 #![allow(refining_impl_trait, async_fn_in_trait)]
 #[cfg(feature = "audio")]
@@ -17,7 +16,8 @@ mod file_macros;
 mod file_type_macros;
 pub mod file_types;
 pub mod files;
-mod fs_handler;
+mod dir_file;
+mod fs_element;
 #[cfg(feature = "image")]
 mod image_file;
 #[cfg(feature = "serde")]
@@ -31,10 +31,10 @@ mod util_macros;
 
 #[cfg(feature = "audio")]
 pub use audio_file::DecodedStream;
-pub use dir::Dir;
+pub use dir::{Dir, DirAny};
 pub use file_types::*;
 pub use files::*;
-pub use fs_handler::FsHandler;
+pub use dir_file::{DirFile, DirFileAny};
 pub use temporary::Temporary;
 
 #[cfg(feature = "open")]

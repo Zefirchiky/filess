@@ -1,5 +1,5 @@
 //! File types are convenience enums of all the types by categories.
-//! 
+//!
 //! Use this instead of boxed dynamic types.
 
 use crate::{define_file_types, primitives::FileTrait};
@@ -79,9 +79,19 @@ impl FileTrait for ModelType {
             "serde_toml" Toml,
         );
     }
-    
+
     fn new(path: impl AsRef<std::path::Path>) -> Self {
         Self::from_ext(path).expect("Must be one of the model formats")
+    }
+
+    fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
+        Self::from_ext(&path).ok_or(Self::TryNewError::WrongExtension(
+            path.as_ref().into(),
+            path.as_ref()
+                .extension()
+                .and_then(|e| Some(e.to_str().unwrap().to_string()))
+                .unwrap(),
+        ))
     }
 
     fn ext() -> &'static [&'static str] {

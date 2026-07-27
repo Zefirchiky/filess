@@ -17,14 +17,6 @@ pub trait ModelFile: FileTrait {
         Ok(())
     }
 
-    #[cfg(feature = "async")]
-    async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
-        use crate::file_base::FileTraitAsync;
-
-        self.asave(&self.self_model_to_bytes(model)?).await?;
-        Ok(())
-    }
-
     fn bytes_to_model<T: for<'de> Deserialize<'de>>(data: Vec<u8>) -> Result<T, Self::Error>;
     fn self_bytes_to_model<T: for<'de> Deserialize<'de>>(
         &self,
@@ -36,14 +28,22 @@ pub trait ModelFile: FileTrait {
     fn load_model<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
         self.self_bytes_to_model(self.load()?)
     }
+}
 
-    #[cfg(feature = "async")]
+#[cfg(feature = "async")]
+pub trait AsyncModelFile: ModelFile + crate::primitives::AsyncFileTrait {
+    async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
+        self.asave(&self.self_model_to_bytes(model)?).await?;
+        Ok(())
+    }
+
     async fn aload_model<T: for<'de> Deserialize<'de>>(&self) -> Result<T, Self::Error> {
-        use crate::primitives::FileTraitAsync;
-
         self.self_bytes_to_model(self.aload().await?)
     }
 }
+
+#[cfg(feature = "async")]
+impl<T: ModelFile + crate::primitives::AsyncFileTrait> AsyncModelFile for T {}
 
 // #[macro_export]
 // macro_rules! define_model_file {
