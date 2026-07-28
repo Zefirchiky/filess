@@ -59,7 +59,10 @@ fn needs_model(file: impl filess::ModelType);
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
 | `open`       | (Default) `open` integration. Open files or directories in default or arbitrary programs (`open()`, `open_with()`, etc.)
 | `walk`       | (Default) `walkdir` integration. Walk through directory (`walk()`)
+| `glob`       | (Default) `glob` integration. Use glob pattern to find files in `Dir`. Also concerts paths into `F` (`Dir<F>::glob()`, `Dir<F>::glob_with()`)
 | `infer`      | (Default) `infer` integration. Enforces that file data is of propper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
 | `trash`      | (Default) `trash` integration. Move files/dirs to trash, aka trash them (`trash()`)
+
+Also exposes `open`, `walk`, `glob`, `infer` and `trash`.
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.

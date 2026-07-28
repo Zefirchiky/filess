@@ -36,6 +36,8 @@ pub use open;
 pub use trash;
 #[cfg(feature = "walk")]
 pub use walkdir;
+#[cfg(feature = "glob")]
+pub use glob;
 
 #[cfg(test)]
 pub(crate) mod test_assets {

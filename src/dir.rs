@@ -122,6 +122,32 @@ impl<F: FsElement> Dir<F> {
     pub fn trash_files(&self) -> Result<(), trash::Error> {
         trash::delete_all(self.into_iter())
     }
+
+    /// Uses glob pattern to find files, and converts them into `F`
+    /// 
+    /// Panics if pattern is incorrect (TODO: Custom error)
+    /// 
+    /// For something more advanced, use `filess::glob` directly
+    #[cfg(feature = "glob")]
+    pub fn glob(&self, pattern: &str) -> Vec<Result<F, glob::GlobError>> {
+        glob::glob(pattern).unwrap()
+            .into_iter()
+            .map(|p| p.map(|f| F::new(f)))
+            .collect()
+    }
+    
+    /// Uses glob pattern to find files, and converts them into `F`
+    /// 
+    /// Panics if pattern is incorrect
+    /// 
+    /// For something more advanced, use `filess::glob` directly
+    #[cfg(feature = "glob")]
+    pub fn glob_with(&self, pattern: &str, options: glob::MatchOptions) -> Vec<Result<F, glob::GlobError>> {
+        glob::glob_with(pattern, options).unwrap()
+            .into_iter()
+            .map(|p| p.map(|f| F::new(f)))
+            .collect()
+    }
 }
 
 impl<F: crate::traits::FileTrait> Dir<F> {
