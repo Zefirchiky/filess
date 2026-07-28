@@ -1,20 +1,19 @@
 use crate::define_file;
-#[cfg(feature = "serde_toml")]
-use crate::traits::ModelFile;
 
+#[cfg(feature = "serde")]
 #[derive(Debug, thiserror::Error)]
 pub enum TomlModelError {
-    #[cfg(feature = "serde_toml")]
+    #[cfg(feature = "toml")]
     #[error("Seder Deserialization Error: {0}")]
     SerdeDeserialization(#[from] serde_toml::de::Error),
-    #[cfg(feature = "serde_toml")]
+    #[cfg(feature = "toml")]
     #[error("Seder Serialization Error: {0}")]
     SerdeSerialization(#[from] serde_toml::ser::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),
 }
 
-#[cfg(feature = "serde_toml")]
+#[cfg(feature = "serde")]
 impl crate::errors::ModelIoError for TomlModelError {}
 
 define_file!(
@@ -24,8 +23,8 @@ define_file!(
     ["toml"]
 );
 
-#[cfg(feature = "serde_toml")]
-impl ModelFile for Toml {
+#[cfg(feature = "serde")]
+impl crate::traits::ModelFile for Toml {
     type Error = TomlModelError;
 
     fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(

@@ -1,6 +1,6 @@
 pub(crate) mod file_base;
 pub(crate) mod fs_element;
-#[cfg(feature = "serde")]
+#[cfg(feature = "_any_model")]
 pub(crate) mod model_file;
 #[cfg(feature = "image")]
 pub(crate) mod image_file;

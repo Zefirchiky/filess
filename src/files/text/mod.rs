@@ -1,8 +1,9 @@
 use crate::pub_use;
 
 pub_use!(
-    "json" json,
-    "toml" toml,
+    "just_json" json,
+    "just_toml" toml,
+    "just_ron" ron,
     "md"   md,
     "txt"  txt,
 );

@@ -8,8 +8,9 @@ define_file_types! {
     FileType,
     File,
     "image" Image,
-    "json" Json,
-    "toml" Toml,
+    "just_json" Json,
+    "just_toml" Toml,
+    "just_ron" Ron,
     "md"   Md,
     "txt"  Txt,
     "jpeg" Jpeg,
@@ -40,43 +41,50 @@ define_file_types! {
 define_file_types! {
     TextTypes,
     File,
-    "json" Json,
-    "toml" Toml,
+    "just_json" Json,
+    "just_toml" Toml,
+    "just_ron" Ron,
     "md"   Md,
     "txt"  Txt,
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 #[derive(Debug, thiserror::Error)]
 pub enum ModelTypeError {
-    #[cfg(feature = "serde_json")]
-    #[error("Json error")]
+    #[cfg(feature = "json")]
+    #[error("Json error: {0}")]
     Json(#[from] <crate::Json as crate::traits::ModelFile>::Error),
-    #[cfg(feature = "serde_toml")]
-    #[error("Toml error")]
+    #[cfg(feature = "toml")]
+    #[error("Toml error: {0}")]
     Toml(#[from] <crate::Toml as crate::traits::ModelFile>::Error),
-    #[error("Io error")]
+    #[cfg(feature = "ron")]
+    #[error("Ron error: {0}")]
+    Ron(#[from] <crate::Ron as crate::traits::ModelFile>::Error),
+    #[error("Io error: {0}")]
     Io(#[from] std::io::Error),
 }
 
 #[cfg(feature = "_any_serde_model")]
 impl crate::errors::ModelIoError for ModelTypeError {}
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 #[derive(Debug, Clone)]
 pub enum ModelType {
-    #[cfg(feature = "serde_json")]
+    #[cfg(feature = "just_json")]
     Json(crate::Json),
-    #[cfg(feature = "serde_toml")]
+    #[cfg(feature = "just_toml")]
     Toml(crate::Toml),
+    #[cfg(feature = "just_ron")]
+    Ron(crate::Ron),
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl FileTrait for ModelType {
     fn change_path(&mut self, path: std::path::PathBuf) {
         crate::match_self_1_arg!(self, change_path, path,
-            "serde_json" Json,
-            "serde_toml" Toml,
+            "just_json" Json,
+            "just_toml" Toml,
+            "just_ron" Ron,
         );
     }
 
@@ -107,73 +115,79 @@ impl FileTrait for ModelType {
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl AsRef<std::path::Path> for ModelType {
     fn as_ref(&self) -> &std::path::Path {
         crate::match_self!(self, as_ref,
-            "serde_json" Json,
-            "serde_toml" Toml,
+            "just_json" Json,
+            "just_toml" Toml,
+            "just_ron" Ron,
         );
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl AsMut<std::path::Path> for ModelType {
     fn as_mut(&mut self) -> &mut std::path::Path {
         crate::match_self!(self, as_mut,
-            "serde_json" Json,
-            "serde_toml" Toml,
+            "just_json" Json,
+            "just_toml" Toml,
+            "just_ron" Ron,
         );
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl Default for ModelType {
+    #[allow(unreachable_code)]
     fn default() -> Self {
-        #[cfg(feature = "serde_json")]
+        #[cfg(feature = "just_json")]
         return Self::Json(crate::Json::default());
-        #[cfg(all(feature = "serde_toml", not(feature = "serde_json")))]
+        #[cfg(all(feature = "just_toml"))]
         return Self::Toml(crate::Toml::default());
+        #[cfg(all(feature = "just_ron"))]
+        return Self::Ron(crate::Ron::default());
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl From<&str> for ModelType {
     fn from(s: &str) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl From<std::path::PathBuf> for ModelType {
     fn from(s: std::path::PathBuf) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl From<&std::path::Path> for ModelType {
     fn from(s: &std::path::Path) -> Self {
         Self::from_ext(s).expect("Must be one of the model formats")
     }
 }
 
-#[cfg(feature = "_any_serde_model")]
+#[cfg(feature = "_any_model")]
 impl ModelType {
     #[allow(unused_variables)]
     pub fn from_ext(path: impl AsRef<std::path::Path>) -> Option<Self> {
-        #[cfg(feature = "_any_model")]
-        {
-            let path_ref = path.as_ref();
-            if let Some(ext) = path_ref.extension().and_then(|s| s.to_str()) {
-                #[cfg(feature = "serde_json")]
-                if crate::Json::ext().contains(&ext) {
-                    return Some(Self::Json(crate::Json::new(&path_ref)));
-                }
-                #[cfg(feature = "serde_toml")]
-                if crate::Toml::ext().contains(&ext) {
-                    return Some(Self::Toml(crate::Toml::new(&path_ref)));
-                }
+        let path_ref = path.as_ref();
+        if let Some(ext) = path_ref.extension().and_then(|s| s.to_str()) {
+            #[cfg(feature = "just_json")]
+            if crate::Json::ext().contains(&ext) {
+                return Some(Self::Json(crate::Json::new(&path_ref)));
+            }
+            #[cfg(feature = "just_toml")]
+            if crate::Toml::ext().contains(&ext) {
+                return Some(Self::Toml(crate::Toml::new(&path_ref)));
+            }
+            #[cfg(feature = "just_ron")]
+            if crate::Ron::ext().contains(&ext) {
+                return Some(Self::Ron(crate::Ron::new(&path_ref)));
             }
         }
         None
@@ -190,10 +204,12 @@ impl crate::traits::ModelFile for ModelType {
     }
     fn self_model_to_bytes(&self, model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         match self {
-            #[cfg(feature = "serde_json")]
+            #[cfg(feature = "json")]
             Self::Json(_) => Ok(crate::Json::model_to_bytes(model)?),
-            #[cfg(feature = "serde_toml")]
+            #[cfg(feature = "toml")]
             Self::Toml(_) => Ok(crate::Toml::model_to_bytes(model)?),
+            #[cfg(feature = "ron")]
+            Self::Ron(_) => Ok(crate::Ron::model_to_bytes(model)?),
         }
     }
 
@@ -208,10 +224,12 @@ impl crate::traits::ModelFile for ModelType {
         data: Vec<u8>,
     ) -> Result<T, Self::Error> {
         match self {
-            #[cfg(feature = "serde_json")]
+            #[cfg(feature = "json")]
             Self::Json(_) => Ok(crate::Json::bytes_to_model(data)?),
-            #[cfg(feature = "serde_toml")]
+            #[cfg(feature = "toml")]
             Self::Toml(_) => Ok(crate::Toml::bytes_to_model(data)?),
+            #[cfg(feature = "ron")]
+            Self::Ron(_) => Ok(crate::Ron::bytes_to_model(data)?),
         }
     }
 }

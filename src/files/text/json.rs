@@ -1,17 +1,16 @@
 use crate::define_file;
-#[cfg(feature = "serde_json")]
-use crate::traits::ModelFile;
 
+#[cfg(feature = "serde")]
 #[derive(Debug, thiserror::Error)]
 pub enum JsonModelError {
-    #[cfg(feature = "serde_json")]
+    #[cfg(feature = "json")]
     #[error("Seder Error: {0}")]
     Serde(#[from] serde_json::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),
 }
 
-#[cfg(feature = "serde_json")]
+#[cfg(feature = "serde")]
 impl crate::errors::ModelIoError for JsonModelError {}
 
 define_file!(
@@ -37,8 +36,8 @@ define_file!(
     b"{}"
 );
 
-#[cfg(feature = "serde_json")]
-impl ModelFile for Json {
+#[cfg(feature = "serde")]
+impl crate::traits::ModelFile for Json {
     type Error = JsonModelError;
 
     fn bytes_to_model<T: for<'de> serde::Deserialize<'de>>(
@@ -166,11 +165,10 @@ mod json_from {
     }
 }
 
-#[cfg(all(test, feature = "serde_json"))]
+#[cfg(all(test, feature = "json"))]
 mod json_model {
     use crate::{
-        Temporary,
-        test_assets::{User, get_temp_path},
+        Temporary, test_assets::{User, get_temp_path}, traits::ModelFile,
     };
 
     use super::*;

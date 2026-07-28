@@ -37,7 +37,7 @@ Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
 // Enforce that file given should be able to save/load `serde` models. `ModelType` can also be passed
 fn needs_model(file: impl filess::traits::ModelFile);
 // OR
-fn needs_model(file: impl filess::ModelType);
+fn needs_model(file: filess::ModelType);
 ```
 
 ## Features
@@ -46,10 +46,12 @@ fn needs_model(file: impl filess::ModelType);
 |--------------|------------
 | `base`       | (Default) Includes basic small features, like `rayon`, `open` and `infer`
 | `all-files`  | (Default) All currently supported files, includes `all-text`, `all-images` and `all-audio`
-| `all-text`   | All currently supported text files: `Json`, `Toml`, `Md`, `Txt`
-| `all-images` | All currently supported image files: `Jpeg`, `Png`, `WebP`, `Avif`, `Tiff`, `Gif`, `Bmp`, `Exr`, `Ff`, `Hdr`, `Ico`, `Pnm`, `Qoi`, `Tga`
-| `all-audio`  | All currently supported audio files: `Ogg`, `Mkv`, `Wav`, `Flac`, `Mp4`, `Mp3`, `Mp2`, `Mp1`, `Mpa`, `Alac`
-| `serde`      | `serde` integration, adds `save_model()` and `load_model()` for `Json` and `Toml`. Use `serde_json` and `serde_toml` to activate integrations for specific files (due to limitations of cargo)
+| `all-text`   | (Default) All currently supported text files: `all-models`, `Md`, `Txt`
+| `all-models` | (Default) All currently supported model files: `Json`, `Toml`, `Ron` (this can be heavy on compilation, as it also activates `serde` and specific serde file support)
+| `just-all-models` | All currently supported model files, without serde: `Json`, `Toml`, `Ron` (features `just_*`)
+| `all-images` | (Default) All currently supported image files: `Jpeg`, `Png`, `WebP`, `Avif`, `Tiff`, `Gif`, `Bmp`, `Exr`, `Ff`, `Hdr`, `Ico`, `Pnm`, `Qoi`, `Tga`
+| `all-audio`  | (Default) All currently supported audio files: `Ogg`, `Mkv`, `Wav`, `Flac`, `Mp4`, `Mp3`, `Mp2`, `Mp1`, `Mpa`, `Alac`
+| `serde`      | (Default) `serde` integration, adds `save_model()` and `load_model()` for `all-models`.
 | `image`      | `image` integration, adds `save_image()` and `load_image()` to all image formats, and `save_image_custom()` to formats where `image` supports custom quality
 | `image-nasm` | Turns on `nasm` feature of `image`
 | `audio`      | `symphonia` integration, adds `load_audio()` to all audio formats. Due to audio being complicated, `DecodedStream` is returned, which contains reader, decoder, track_id and helper methods
@@ -66,3 +68,7 @@ fn needs_model(file: impl filess::ModelType);
 Also exposes `open`, `walk`, `glob`, `infer` and `trash`.
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.
+
+Adding `json`, `toml` or `ron` without serde support doesn't really make sense, as they are used specifically for it. But activating all of their features is not good either, as it will add serde and additional crate for each format, which will increase binary and compilation speed.
+I tried doing conditional feature, so only if both `serde` and `json` are active, `serde_json` will be added, but unfortunately cargo doesn't support that yet.
+Current approach is to just activate both `serde` and `serde_json` when `json` feature is active, but this will hopefully change.

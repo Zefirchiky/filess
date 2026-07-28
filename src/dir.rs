@@ -195,7 +195,7 @@ impl<F: FileTrait + 'static> Dir<F> {
     }
 }
 
-#[cfg(all(feature = "serde", any(feature = "serde_json", feature = "serde_toml")))]
+#[cfg(feature = "_any_serde_model")]
 impl<F: crate::traits::ModelFile + 'static> Dir<F> {
     pub fn self_bytes_to_models<T: for<'de> serde::Deserialize<'de>>(
         &self,

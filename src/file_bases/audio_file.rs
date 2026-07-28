@@ -9,9 +9,9 @@ use crate::traits::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AudioError {
-    #[error("Io error")]
+    #[error("Io error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Symphonia error")]
+    #[error("Symphonia error: {0}")]
     Symphonia(#[from] symphonia::core::errors::Error),
     #[error("No track was found in the file")]
     NoTrack,

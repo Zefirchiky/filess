@@ -1,10 +1,11 @@
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::traits::FileTrait;
-
+#[cfg(feature = "serde")]
 pub trait ModelIoError: From<std::io::Error> {}
 
-pub trait ModelFile: FileTrait {
+#[cfg(feature = "serde")]
+pub trait ModelFile: crate::traits::FileTrait {
     type Error: ModelIoError;
 
     fn model_to_bytes(model: &impl Serialize) -> Result<Vec<u8>, Self::Error>;
@@ -30,7 +31,7 @@ pub trait ModelFile: FileTrait {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", feature = "serde"))]
 pub trait AsyncModelFile: ModelFile + crate::traits::AsyncFileTrait {
     async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
         self.asave(&self.self_model_to_bytes(model)?).await?;
@@ -42,7 +43,7 @@ pub trait AsyncModelFile: ModelFile + crate::traits::AsyncFileTrait {
     }
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", feature = "serde"))]
 impl<T: ModelFile + crate::traits::AsyncFileTrait> AsyncModelFile for T {}
 
 // #[macro_export]
