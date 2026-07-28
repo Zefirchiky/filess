@@ -78,6 +78,22 @@ impl<F: FsElement> crate::traits::AsyncFsElement for Dir<F> {
 }
 
 impl<F: FsElement> Dir<F> {
+    /// Creates a new `Dir` instance from a given path.
+    ///
+    /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
+    /// 
+    /// Panics at error.
+    pub fn new(path: impl AsRef<Path>) -> Self {
+        <Dir<F> as FsElement>::new(path)
+    }
+    
+    /// Creates a new `Dir` instance from a given path.
+    ///
+    /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
+    pub fn try_new(path: impl AsRef<Path>) -> Result<Self, <Dir<F> as FsElement>::TryNewError> {
+        <Dir<F> as FsElement>::try_new(path)
+    }
+
     /// Will create a this directory and recursively create all child files and directories.
     ///
     /// It is recommended to use async version of this method

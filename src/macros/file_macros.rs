@@ -17,6 +17,12 @@ macro_rules! define_file {
 
         impl $name {
             #[doc = concat!("Creates new ", stringify!($name), ".")]
+            pub fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, <Self as crate::traits::FsElement>::TryNewError> { // A convenience method, otherwise user will need to import `FileTrait`
+                <Self as FileTrait>::try_new(path)      // ? : Duplication that might be unnecessary???
+                // TODO: Check binary size generated
+            }
+            
+            #[doc = concat!("Creates new ", stringify!($name), ".")]
             pub fn new(path: impl AsRef<std::path::Path>) -> Self { // A convenience method, otherwise user will need to import `FileTrait`
                 <Self as FileTrait>::new(path)      // ? : Duplication that might be unnecessary???
                 // TODO: Check binary size generated
