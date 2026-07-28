@@ -1,50 +1,41 @@
 //! Simplified file primitives.
-//! 
+//!
 //! `Filess` should be used to enforce file types needed.
-//! 
+//!
 //! It was designed to be lightweight, with all integrations being optional.
-//! 
+//!
 //! Each file type has it's own feature, which is the reason for so many feature flags.
 #![deny(unreachable_pub)]
 #![allow(refining_impl_trait, async_fn_in_trait)]
-#[cfg(feature = "audio")]
-mod audio_file;
 mod dir;
+mod dir_file;
 pub mod errors;
-mod file_base;
-mod file_macros;
-mod file_type_macros;
+mod file_bases;
 pub mod file_types;
 pub mod files;
-mod dir_file;
-mod fs_element;
-#[cfg(feature = "image")]
-mod image_file;
-#[cfg(feature = "serde")]
-mod model_file;
+mod macros;
 #[cfg(feature = "open")]
 mod open_integration;
 pub mod primitives;
-pub mod traits;
 mod temporary;
-mod util_macros;
+pub mod traits;
 
-#[cfg(feature = "audio")]
-pub use audio_file::DecodedStream;
 pub use dir::{Dir, DirAny};
+pub use dir_file::{DirFile, DirFileAny};
+#[cfg(feature = "audio")]
+pub use file_bases::audio_file::DecodedStream;
 pub use file_types::*;
 pub use files::*;
-pub use dir_file::{DirFile, DirFileAny};
 pub use temporary::Temporary;
 
-#[cfg(feature = "open")]
-pub use open;
-#[cfg(feature = "walk")]
-pub use walkdir;
 #[cfg(feature = "infer")]
 pub use infer;
+#[cfg(feature = "open")]
+pub use open;
 #[cfg(feature = "trash")]
 pub use trash;
+#[cfg(feature = "walk")]
+pub use walkdir;
 
 #[cfg(test)]
 pub(crate) mod test_assets {

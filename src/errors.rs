@@ -1,6 +1,6 @@
 #[cfg(feature = "audio")]
-pub use crate::audio_file::AudioError;
+pub use crate::file_bases::audio_file::AudioError;
 #[cfg(feature = "image")]
-pub use crate::image_file::ImageIoError;
+pub use crate::file_bases::image_file::ImageIoError;
 #[cfg(feature = "serde")]
-pub use crate::model_file::ModelIoError;
+pub use crate::file_bases::model_file::ModelIoError;

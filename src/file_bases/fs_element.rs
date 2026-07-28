@@ -64,4 +64,4 @@ pub trait AsyncFsElement: FsElement {
 }
 
 #[cfg(feature = "open")]
-impl<F: FsElement> crate::primitives::OpenTrait for F {}
+impl<F: FsElement> crate::traits::OpenTrait for F {}

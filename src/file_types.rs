@@ -2,7 +2,7 @@
 //!
 //! Use this instead of boxed dynamic types.
 
-use crate::{define_file_types, primitives::FileTrait};
+use crate::{define_file_types, traits::FileTrait};
 
 define_file_types! {
     FileType,

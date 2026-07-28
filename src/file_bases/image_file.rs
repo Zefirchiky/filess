@@ -1,6 +1,6 @@
 use image::{DynamicImage, ImageReader};
 
-use crate::primitives::FileTrait;
+use crate::traits::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ImageIoError {
@@ -24,7 +24,7 @@ pub trait ImageFile: FileTrait {
 }
 
 #[cfg(feature = "async")]
-pub trait AsyncImageFile: ImageFile + crate::primitives::AsyncFileTrait {
+pub trait AsyncImageFile: ImageFile + crate::traits::AsyncFileTrait {
     async fn asave_image(&self, img: &DynamicImage) -> Result<(), image::ImageError> {
         use std::io::{BufWriter, Cursor};
 
@@ -42,7 +42,7 @@ pub trait AsyncImageFile: ImageFile + crate::primitives::AsyncFileTrait {
 }
 
 #[cfg(feature = "async")]
-impl<T: ImageFile + crate::primitives::AsyncFileTrait> AsyncImageFile for T {}
+impl<T: ImageFile + crate::traits::AsyncFileTrait> AsyncImageFile for T {}
 
 pub trait ImageQualityConfig<'a> {
     type Encoder: image::ImageEncoder;
@@ -68,7 +68,7 @@ pub trait ImageQualityEncoding: FileTrait {
 }
 
 #[cfg(feature = "async")]
-pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::primitives::AsyncFileTrait {
+pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::traits::AsyncFileTrait {
     /// Save image with custom quality.
     ///
     /// Use `asave_image_custom_offload` if this is too slow.
@@ -102,4 +102,4 @@ pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::primitives::A
 }
 
 #[cfg(feature = "async")]
-impl<T: ImageQualityEncoding + crate::primitives::AsyncFileTrait> AsyncImageQualityEncoding for T {}
+impl<T: ImageQualityEncoding + crate::traits::AsyncFileTrait> AsyncImageQualityEncoding for T {}

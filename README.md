@@ -4,7 +4,7 @@ Simplify file management with file primitives.
 
 Use `filess` as you would use `String` or `Vec`.
 
-Each file format is now a separate type, if your function needs json, you can put `filess::Json` as a filed, enforcing the proper path.
+Each file format is now a separate type, if your function needs json, you can put `filess::Json` as a type, enforcing the proper path.
 
 `Filess` simplifies saving and loading of data, with `serde`, `image` and `symphonia` optional integration.
 
@@ -16,7 +16,7 @@ let model: YourModel = file1.load_model()?;         // Or like this
 file1.save(&data)?;                                 // Save anything with `impl AsRef<[u8]>`
 file1.save_model(&model)?;                          // `Serde` integration: save a model into file
 
-let file2: Jpeg = Temporary::new(Jpeg::new("path/to/image.jpeg")); // Temporary file will be deleted together with it's empty parent dirs at `drop()`
+let file2: Jpeg = Temporary::new(Jpeg::new("path/to/image.jpg")); // Temporary file will be deleted together with it's empty parent dirs at `drop()`
 let image: DynamicImage = file2.load_image()?;      // `Image` integration: load image of jpeg format from file
 file2.save_image(&image)?;                          // `Image` integration: save `DynamicImage` with default compression parameters
 // `Image` integration: save `DynamicImage` with custom quality parameters (only available if supports quality settings)
@@ -36,6 +36,8 @@ Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
 
 // Enforce that file given should be able to save/load `serde` models. `ModelType` can also be passed
 fn needs_model(file: impl filess::traits::ModelFile);
+// OR
+fn needs_model(file: impl filess::ModelType);
 ```
 
 ## Features

@@ -7,7 +7,7 @@ macro_rules! define_file {
         [$($ext:expr),*]
         $(,$init_bytes:expr)?
     ) => {
-        use crate::primitives::{FileBase, FileTrait};
+        use crate::{primitives::FileBase, traits::FileTrait};
 
         #[derive(Debug, Default, Clone, PartialEq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -131,7 +131,7 @@ macro_rules! define_custom_quality_image {
     ($name:ident, $config:ident) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::primitives::ImageQualityEncoding for $name {
+            impl crate::traits::ImageQualityEncoding for $name {
                 type Config = $config;
             }
         };

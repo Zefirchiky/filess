@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::primitives::FileTrait;
+use crate::traits::FileTrait;
 
 pub trait ModelIoError: From<std::io::Error> {}
 
@@ -31,7 +31,7 @@ pub trait ModelFile: FileTrait {
 }
 
 #[cfg(feature = "async")]
-pub trait AsyncModelFile: ModelFile + crate::primitives::AsyncFileTrait {
+pub trait AsyncModelFile: ModelFile + crate::traits::AsyncFileTrait {
     async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
         self.asave(&self.self_model_to_bytes(model)?).await?;
         Ok(())
@@ -43,7 +43,7 @@ pub trait AsyncModelFile: ModelFile + crate::primitives::AsyncFileTrait {
 }
 
 #[cfg(feature = "async")]
-impl<T: ModelFile + crate::primitives::AsyncFileTrait> AsyncModelFile for T {}
+impl<T: ModelFile + crate::traits::AsyncFileTrait> AsyncModelFile for T {}
 
 // #[macro_export]
 // macro_rules! define_model_file {

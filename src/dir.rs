@@ -2,8 +2,8 @@ use std::{
     fs, io, ops::Div, path::{Path, PathBuf},
 };
 
-use crate::{DirFile, primitives::FsElement};
-use crate::primitives::FileTrait;
+use crate::{DirFile, traits::FsElement};
+use crate::traits::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DirCreationError {
@@ -63,7 +63,7 @@ impl<F: FsElement> FsElement for Dir<F> {
 
 #[cfg(feature = "async")]
 #[async_trait::async_trait]
-impl<F: FsElement> crate::primitives::AsyncFsElement for Dir<F> {
+impl<F: FsElement> crate::traits::AsyncFsElement for Dir<F> {
     /// Recursively creates dir in file system
     async fn acreate(&self) -> std::io::Result<()> {
         tokio::fs::create_dir_all(self).await
@@ -104,21 +104,21 @@ impl<F: FsElement> Dir<F> {
     /// Moves folder in trash
     #[cfg(feature = "trash")]
     pub fn trash_files(&self) -> Result<(), trash::Error> {
-        trash::delete(self)
+        trash::delete_all(self.into_iter())
     }
 }
 
-impl<F: crate::primitives::FileTrait> Dir<F> {
+impl<F: crate::traits::FileTrait> Dir<F> {
     pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
         self.elements.iter().map(|f| f.load()).collect()
     }
 }
 
 #[cfg(feature = "async")]
-impl<F: crate::primitives::AsyncFsElement> Dir<F> {
+impl<F: crate::traits::AsyncFsElement> Dir<F> {
     /// Creates all the elements inside the folder, including the folder
     pub async fn acreate_all(&self) -> io::Result<()> {
-        use crate::fs_element::AsyncFsElement;
+        use crate::traits::AsyncFsElement;
 
         self.acreate().await?;
         for el in &self.elements {
@@ -128,8 +128,8 @@ impl<F: crate::primitives::AsyncFsElement> Dir<F> {
     }
 }
 
+#[cfg(feature = "async")]
 impl<F: FileTrait + 'static> Dir<F> {
-    #[cfg(feature = "async")]
     pub async fn aload_files(&self) -> io::Result<Vec<Vec<u8>>> {
         use crate::traits::AsyncFileTrait;
             

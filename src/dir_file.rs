@@ -1,4 +1,4 @@
-use crate::{Dir, FileType, primitives::FsElement};
+use crate::{Dir, FileType, traits::FsElement};
 
 /// Represents either file `F1` or a dir containing `F2`
 #[derive(Debug)]

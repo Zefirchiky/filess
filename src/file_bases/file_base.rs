@@ -2,7 +2,7 @@ use std::{
     ffi::OsString, fmt::Debug, fs::{self, create_dir_all}, marker::PhantomData, ops::{Deref, DerefMut}, path::{Path, PathBuf},
 };
 
-use crate::fs_element::FsElement;
+use crate::traits::FsElement;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FileCreationError<F: FileTrait> {
@@ -64,7 +64,7 @@ impl<F: FileTrait> FileBase<F> {
 }
 
 #[cfg(feature = "open")]
-impl<F: FileTrait> crate::primitives::OpenTrait for FileBase<F> {}
+impl<F: FileTrait> crate::traits::OpenTrait for FileBase<F> {}
 
 impl<H: FileTrait> AsRef<Path> for FileBase<H> {
     fn as_ref(&self) -> &Path {
@@ -252,7 +252,7 @@ impl<T: FileTrait> FsElement for T {
 
 #[cfg(feature = "async")]
 #[async_trait::async_trait]
-impl<T: FileTrait> crate::primitives::AsyncFsElement for T {
+impl<T: FileTrait> crate::traits::AsyncFsElement for T {
     async fn acreate(&self) -> std::io::Result<()> {
         use tokio::fs;
 
@@ -276,10 +276,10 @@ impl<T: FileTrait> crate::primitives::AsyncFsElement for T {
 }
 
 #[cfg(feature = "async")]
-impl<T: FileTrait + crate::primitives::AsyncFsElement> AsyncFileTrait for T {}
+impl<T: FileTrait + crate::traits::AsyncFsElement> AsyncFileTrait for T {}
 
 #[cfg(feature = "async")]
-pub trait AsyncFileTrait: FileTrait + crate::primitives::AsyncFsElement {
+pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
     async fn asave(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
         if let Some(parent) = self.as_ref().parent() {
             tokio::fs::create_dir_all(parent).await?
