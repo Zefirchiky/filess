@@ -5,10 +5,10 @@ use crate::define_file;
 /// Errors from TOML model serialization/deserialization.
 pub enum TomlModelError {
     #[cfg(feature = "toml")]
-    #[error("Seder Deserialization Error: {0}")]
+    #[error("Serde Deserialization Error: {0}")]
     SerdeDeserialization(#[from] serde_toml::de::Error),
     #[cfg(feature = "toml")]
-    #[error("Seder Serialization Error: {0}")]
+    #[error("Serde Serialization Error: {0}")]
     SerdeSerialization(#[from] serde_toml::ser::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),

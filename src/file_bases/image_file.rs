@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use image::{DynamicImage, ImageReader};
 
 use crate::traits::FileTrait;
@@ -52,7 +54,7 @@ pub trait AsyncImageFile: ImageFile + crate::traits::AsyncFileTrait {
 impl<T: ImageFile + crate::traits::AsyncFileTrait> AsyncImageFile for T {}
 
 /// Configuration for a quality-tunable image encoder.
-pub trait ImageQualityConfig<'a> {
+pub trait ImageQualityConfig<'a>: Debug + Default + Clone + Copy {
     type Encoder: image::ImageEncoder;
     /// Returns an encoder configured with the quality settings.
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder;
@@ -96,7 +98,7 @@ pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::traits::Async
         Ok(())
     }
 
-    /// Save image with [offload] function and custom quality.
+    /// Save image with `offload` function and custom quality.
     ///
     /// Use if encoding image is expensive and you want to offload it into a separate thread/async.
     async fn asave_image_custom_offload<'a, F>(

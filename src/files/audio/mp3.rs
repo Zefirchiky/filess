@@ -28,3 +28,14 @@ define_file!(
 );
 define_audio_file!(Mp3, MpaReader);
 define_audio_codecs_file!(Mp3, MpaDecoder, CODEC_TYPE_MP3);
+
+#[cfg(all(test, feature = "audio"))]
+mod mp3_tests {
+    use crate::traits::AudioCodecsFile;
+    use symphonia::core::codecs::CODEC_TYPE_MP3;
+
+    #[test]
+    fn codec_type() {
+        assert_eq!(super::Mp3::codec_type(), CODEC_TYPE_MP3);
+    }
+}

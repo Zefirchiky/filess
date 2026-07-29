@@ -112,6 +112,116 @@ macro_rules! define_file {
                 &mut self.file
             }
         }
+
+        #[cfg(all(test, feature = "__full_test"))]
+        #[allow(non_snake_case)]
+        mod __file_tests {
+            use super::*;
+            use $crate::{Temporary, traits::FsElement};
+            use std::path::{Path, PathBuf};
+
+            fn __base(label: &str) -> PathBuf {
+                let dir = std::env::temp_dir().join("filess_auto_test");
+                let exts = <$name as FileTrait>::ext();
+                if exts.is_empty() {
+                    dir.join(label)
+                } else if exts[0].is_empty() {
+                    // ext = [""], produce "label." so extension is Some("")
+                    dir.join(format!("{}.", label))
+                } else {
+                    dir.join(format!("{}.{}", label, exts[0]))
+                }
+            }
+
+            #[test]
+            fn ext_non_empty() {
+                assert!(!<$name as FileTrait>::ext().is_empty());
+            }
+
+            #[test]
+            fn try_new_valid() {
+                <$name as FileTrait>::try_new(&__base("valid")).unwrap();
+            }
+
+            #[test]
+            fn try_new_invalid_extension() {
+                let err = <$name as FileTrait>::try_new("data.invalid").unwrap_err();
+                let msg = err.to_string();
+                assert!(msg.contains("invalid") || msg.contains("no extension") || msg.contains("UTF-8"));
+            }
+
+            #[test]
+            fn create_and_remove() {
+                let p = __base("cr");
+                let f = Temporary::new(<$name as FileTrait>::new(&p));
+                f.create().unwrap();
+                assert!(p.exists());
+                f.remove().unwrap();
+                assert!(!p.exists());
+            }
+
+            #[test]
+            fn save_and_load() {
+                let p = __base("sl");
+                let f = Temporary::new(<$name as FileTrait>::new(&p));
+                let data = b"auto test data";
+                f.save(data).unwrap();
+                assert_eq!(f.load().unwrap(), data);
+            }
+
+            #[test]
+            fn from_path() {
+                let _f = <$name as From<&Path>>::from(&__base("fp"));
+            }
+
+            #[test]
+            fn from_pathbuf() {
+                let _f = <$name as From<PathBuf>>::from(__base("fpb"));
+            }
+
+            #[test]
+            fn from_str() {
+                let s = __base("fs").to_string_lossy().to_string();
+                let _f = <$name as From<&str>>::from(&s as &str);
+            }
+
+            #[test]
+            fn from_string() {
+                let s = __base("fstr").to_string_lossy().to_string();
+                let _f = <$name as From<String>>::from(s);
+            }
+
+            #[test]
+            fn copy_roundtrip() {
+                let src = __base("copy_src");
+                let dst = __base("copy_dst");
+                let f = Temporary::new(<$name as FileTrait>::new(&src));
+                f.save(b"copy data").unwrap();
+                let copied = f.copy(&dst).unwrap();
+                assert!(dst.exists());
+                assert_eq!(copied.load().unwrap(), b"copy data");
+            }
+
+            #[test]
+            fn rename_fs_and_inner() {
+                let src = __base("ren_src");
+                let dst = __base("ren_dst");
+                let mut f = Temporary::new(<$name as FileTrait>::new(&src));
+                f.save(b"rename data").unwrap();
+                f.rename(&dst).unwrap();
+                assert!(!src.exists());
+                assert!(dst.exists());
+                assert_eq!(f.load().unwrap(), b"rename data");
+            }
+
+            #[cfg(feature = "infer")]
+            #[test]
+            fn infer_does_not_error() {
+                let p = __base("infer");
+                let f = Temporary::new(<$name as FileTrait>::new(&p));
+                let _ = f.infer();
+            }
+        }
     };
 }
 
@@ -172,3 +282,5 @@ macro_rules! define_audio_container_file {
         impl crate::traits::AudioContainerFile for $name {}
     };
 }
+
+

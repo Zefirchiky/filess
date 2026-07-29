@@ -14,8 +14,8 @@ pub enum DirCreationError {
 
 /// A directory structure, simplifies work with multiple files.
 /// 
-/// For any available file use [Dir<FileType>].
-/// For any file or dir - [Dir<DirFile<FileType, FileType>>]
+/// For any available file use [`Dir<FileType>`](crate::Dir).
+/// For any file or dir - [`Dir<DirFile<FileType, FileType>>`](crate::Dir)
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dir<F: FsElement> {

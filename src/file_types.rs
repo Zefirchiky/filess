@@ -95,13 +95,15 @@ impl FileTrait for ModelType {
     }
 
     fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
-        Self::from_ext(&path).ok_or(Self::TryNewError::WrongExtension(
-            path.as_ref().into(),
-            path.as_ref()
+        let path = path.as_ref();
+        Self::from_ext(path).ok_or_else(|| {
+            let ext = path
                 .extension()
-                .and_then(|e| Some(e.to_str().unwrap().to_string()))
-                .unwrap(),
-        ))
+                .and_then(|e| e.to_str())
+                .map(|s| s.to_string())
+                .unwrap_or_default();
+            Self::TryNewError::WrongExtension(path.into(), ext)
+        })
     }
 
     fn ext() -> &'static [&'static str] {

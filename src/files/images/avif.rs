@@ -1,7 +1,8 @@
 use crate::{define_custom_quality_image, define_file, define_image_file};
 
-#[cfg(feature = "image")]
 /// Quality and speed configuration for AVIF encoding.
+#[cfg(feature = "image")]
+#[derive(Debug, Clone, Copy)]
 pub struct AvifConfig {
     /// 1-10, 1 - slowest, 10 - fastest. Default: 4
     pub speed: u8,
@@ -10,7 +11,17 @@ pub struct AvifConfig {
 }
 
 #[cfg(feature = "image")]
-impl<'a> crate::traits::ImageQualityConfig  <'a> for AvifConfig {
+impl Default for AvifConfig {
+    fn default() -> Self {
+        Self {
+            speed: 4,
+            quality: 80,
+        }
+    }
+}
+
+#[cfg(feature = "image")]
+impl<'a> crate::traits::ImageQualityConfig<'a> for AvifConfig {
     type Encoder = image::codecs::avif::AvifEncoder<&'a mut Vec<u8>>;
     fn get_encoder(&self, w: &'a mut Vec<u8>) -> Self::Encoder {
         image::codecs::avif::AvifEncoder::new_with_speed_quality(w, self.speed, self.quality)

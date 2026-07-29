@@ -1,9 +1,18 @@
 use crate::{define_custom_quality_image, define_file, define_image_file};
 
 /// Compression speed configuration for GIF encoding.
+#[cfg(feature = "image")]
+#[derive(Debug, Clone, Copy)]
 pub struct GifConfig {
     /// 1-30, 1 - slowest lossless, 30 - fastest. 10 is good. Default: 1
     pub speed: i32,
+}
+
+#[cfg(feature = "image")]
+impl Default for GifConfig {
+    fn default() -> Self {
+        Self { speed: 1 }
+    }
 }
 
 #[cfg(feature = "image")]

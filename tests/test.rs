@@ -84,27 +84,6 @@ fn save_creates_parent_dirs() {
     assert!(p.exists());
 }
 
-#[cfg(feature = "json")]
-#[test]
-fn load_non_existent_creates_with_init_bytes() {
-    let dir = scratch_dir();
-    let p = dir.join("init_test.json");
-    let f = Temporary::new(filess::Json::new(&p));
-    let loaded = f.load().unwrap();
-    assert_eq!(loaded, b"{}");
-    assert!(p.exists());
-}
-
-#[cfg(feature = "txt")]
-#[test]
-fn txt_no_init_bytes() {
-    let dir = scratch_dir();
-    let p = dir.join("plain.txt");
-    let f = Temporary::new(filess::Txt::new(&p));
-    let loaded = f.load().unwrap();
-    assert!(loaded.is_empty());
-}
-
 // ── Copy / Rename ───────────────────────────────────────────────────
 #[cfg(feature = "json")]
 #[test]
@@ -501,7 +480,9 @@ fn wav_metadata() {
 mod async_tests {
     use filess::traits::AsyncFileTrait;
     use filess::traits::AsyncFsElement;
-    use filess::Json;
+    use filess::traits::FileTrait;
+    use filess::traits::FsElement;
+    use filess::{Dir, Json};
 
     #[tokio::test]
     async fn async_save_load() {
@@ -523,6 +504,93 @@ mod async_tests {
         assert!(p.exists());
         f.aremove().await.unwrap();
         assert!(!p.exists());
+    }
+
+    #[tokio::test]
+    async fn async_acopy() {
+        let dir = crate::scratch_dir();
+        let src = dir.join("async_src.json");
+        let dst = dir.join("async_dst.json");
+        let f = filess::Temporary::new(Json::new(&src));
+        f.asave(b"async copy").await.unwrap();
+        let copied = f.acopy(&dst).await.unwrap();
+        assert!(dst.exists());
+        let loaded = copied.aload().await.unwrap();
+        assert_eq!(loaded, b"async copy");
+    }
+
+    #[tokio::test]
+    async fn async_arename() {
+        let dir = crate::scratch_dir();
+        let src = dir.join("async_old.json");
+        let dst = dir.join("async_new.json");
+        let f = filess::Temporary::new(Json::new(&src));
+        f.asave(b"async rename").await.unwrap();
+        let renamed = f.arename(&dst).await.unwrap();
+        assert!(!src.exists());
+        assert!(dst.exists());
+        let loaded = renamed.aload().await.unwrap();
+        assert_eq!(loaded, b"async rename");
+    }
+
+    #[tokio::test]
+    async fn async_dir_acreate_all() {
+        let root = crate::scratch_dir();
+        let dir_path = root.join("async_dir");
+        let mut d = Dir::<Json>::new(&dir_path);
+        let a_path = dir_path.join("a.json");
+        let b_path = dir_path.join("b.json");
+        d.push(Json::new(&a_path));
+        d.push(Json::new(&b_path));
+        d.acreate_all().await.unwrap();
+        assert!(a_path.exists());
+        assert!(b_path.exists());
+        // clean up manually since Temporary can't wrap async ops
+        d.remove().unwrap();
+    }
+
+    #[tokio::test]
+    async fn async_dir_aload_files() {
+        let root = crate::scratch_dir();
+        let dir_path = root.join("async_load");
+        let mut d = Dir::<Json>::new(&dir_path);
+        let a_path = dir_path.join("a.json");
+        let b_path = dir_path.join("b.json");
+        d.push(Json::new(&a_path));
+        d.push(Json::new(&b_path));
+        d.create_all().unwrap();
+        d.elements[0].save(b"alpha").unwrap();
+        d.elements[1].save(b"beta").unwrap();
+        let contents = d.aload_files().await.unwrap();
+        assert!(contents.contains(&b"alpha".to_vec()));
+        assert!(contents.contains(&b"beta".to_vec()));
+        d.remove().unwrap();
+    }
+}
+
+#[cfg(all(feature = "async", feature = "json", feature = "serde"))]
+mod async_model_tests {
+    use filess::traits::{FsElement, ModelFile};
+    use filess::{Dir, Json};
+
+    #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
+    struct Cfg { key: String }
+
+    #[tokio::test]
+    async fn async_dir_aload_models() {
+        let root = crate::scratch_dir();
+        let dir_path = root.join("async_models");
+        let mut d = Dir::<Json>::new(&dir_path);
+        let a_path = dir_path.join("a.json");
+        let b_path = dir_path.join("b.json");
+        d.push(Json::new(&a_path));
+        d.push(Json::new(&b_path));
+        d.create_all().unwrap();
+        d.elements[0].save_model(&Cfg { key: "a".into() }).unwrap();
+        d.elements[1].save_model(&Cfg { key: "b".into() }).unwrap();
+        let models: Vec<Cfg> = d.aload_models().await.unwrap();
+        assert_eq!(models, vec![Cfg { key: "a".into() }, Cfg { key: "b".into() }]);
+        d.remove().unwrap();
     }
 }
 
@@ -644,17 +712,6 @@ fn file_type_default() {
 }
 
 // ── File creation with init bytes ───────────────────────────────────
-#[cfg(feature = "json")]
-#[test]
-fn create_json_initializes_with_braces() {
-    let dir = scratch_dir();
-    let p = dir.join("init.json");
-    let f = Temporary::new(filess::Json::new(&p));
-    f.create().unwrap();
-    let content = std::fs::read_to_string(&p).unwrap();
-    assert_eq!(content, "{}");
-}
-
 // ── Error display ───────────────────────────────────────────────────
 #[cfg(feature = "json")]
 #[test]
@@ -898,31 +955,6 @@ fn image_types_from_ext() {
 fn audio_types_from_ext() {
     let t = filess::AudioTypes::from_ext("song.mp3");
     assert!(matches!(t, filess::AudioTypes::Mp3(_)));
-}
-
-// ── Audio codec_type ────────────────────────────────────────────────
-#[cfg(feature = "flac")]
-#[test]
-fn flac_codec_type() {
-    use filess::traits::AudioCodecsFile;
-    use symphonia::core::codecs::CODEC_TYPE_FLAC;
-    assert_eq!(filess::Flac::codec_type(), CODEC_TYPE_FLAC);
-}
-
-#[cfg(feature = "mp3")]
-#[test]
-fn mp3_codec_type() {
-    use filess::traits::AudioCodecsFile;
-    use symphonia::core::codecs::CODEC_TYPE_MP3;
-    assert_eq!(filess::Mp3::codec_type(), CODEC_TYPE_MP3);
-}
-
-#[cfg(feature = "wav")]
-#[test]
-fn wav_codec_type() {
-    use filess::traits::AudioCodecsFile;
-    use symphonia::core::codecs::CODEC_TYPE_PCM_S16LE;
-    assert_eq!(filess::Wav::codec_type(), CODEC_TYPE_PCM_S16LE);
 }
 
 // ── Error variant tests ─────────────────────────────────────────────

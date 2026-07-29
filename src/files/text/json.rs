@@ -5,7 +5,7 @@ use crate::define_file;
 /// Errors from JSON model serialization/deserialization.
 pub enum JsonModelError {
     #[cfg(feature = "json")]
-    #[error("Seder Error: {0}")]
+    #[error("Serde Error: {0}")]
     Serde(#[from] serde_json::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),
@@ -111,6 +111,16 @@ mod json {
 
         assert_eq!(loaded, Json::file_init_bytes().unwrap());
         assert!(file_path.exists());
+    }
+
+    #[test]
+    fn init_bytes_create() {
+        let dir = temp_dir();
+        let p = dir.join("json_init_bytes.json");
+        let f = Temporary::new(Json::new(&p));
+        f.create().unwrap();
+        let content = std::fs::read(&p).unwrap();
+        assert_eq!(content, b"{}");
     }
 }
 

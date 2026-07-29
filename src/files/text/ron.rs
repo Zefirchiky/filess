@@ -5,10 +5,10 @@ use crate::define_file;
 /// Errors from RON model serialization/deserialization.
 pub enum RonModelError {
     #[cfg(feature = "ron")]
-    #[error("Seder Error: {0}")]
+    #[error("Serde Error: {0}")]
     SerdeDeserialization(#[from] ron::error::SpannedError),
     #[cfg(feature = "ron")]
-    #[error("Seder Error: {0}")]
+    #[error("Serde Error: {0}")]
     SerdeSerialization(#[from] ron::Error),
     #[error("Io Error: {0}")]
     Io(#[from] std::io::Error),

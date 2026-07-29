@@ -1,6 +1,6 @@
 //! Simplified file primitives.
 //!
-//! [filess] should be used to enforce file types needed.
+//! `filess` should be used to enforce file types needed.
 //!
 //! It was designed to be lightweight, with all integrations being optional.
 //!
