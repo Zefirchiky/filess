@@ -7,6 +7,7 @@ use symphonia::core::units::Time;
 
 use crate::traits::FileTrait;
 
+/// Errors from audio decoding operations.
 #[derive(Debug, thiserror::Error)]
 pub enum AudioError {
     #[error("Io error: {0}")]
@@ -38,7 +39,7 @@ impl<A: AudioFile, D: Decoder> DecodedStream<A, D> {
         }
     }
 
-    /// Returns the next frame converted to f32 samples.
+    /// Returns the next decoded frame as f32 samples, or [None] at the end.
     pub fn next_frame(&mut self) -> Option<&[f32]> {
         let packet = self.reader.next_packet().ok()?;
         let decoded = self.decoder.decode(&packet).ok()?;
@@ -122,16 +123,18 @@ where
     }
 }
 
+/// Parameters extracted from an audio stream, ready for decoder construction.
 pub struct DecodedStreamParams<R: FormatReader> {
     reader: R,
     params: CodecParameters,
     track_id: u32,
 }
 
+/// Trait for audio files that can be decoded via symphonia.
 pub trait AudioFile: FileTrait {
     type Reader: FormatReader;
 
-    /// Loads audio and parser needed parameters for `Decoder`'s use
+    /// Loads audio and parser needed parameters for [Decoder]'s use
     fn load_audio_decoded_stream_params(
         &self,
     ) -> Result<DecodedStreamParams<Self::Reader>, AudioError> {
@@ -154,8 +157,9 @@ pub trait AudioFile: FileTrait {
     }
 }
 
+/// Trait for container-based audio files that can use any compatible decoder ([DynamicDecoder]).
 pub trait AudioContainerFile: AudioFile {
-    /// Loads audio container with `DynamicDecoder`, which can be any `Decoder` supported by this format
+    /// Loads audio container with [DynamicDecoder], which can be any [Decoder] supported by this format
     fn load_audio(&self) -> Result<DecodedStream<Self, DynamicDecoder>, AudioError> {
         let params = self.load_audio_decoded_stream_params()?;
         let decoder = symphonia::default::get_codecs().make(&params.params, &Default::default())?;
@@ -167,11 +171,14 @@ pub trait AudioContainerFile: AudioFile {
     }
 }
 
+/// Trait for audio files with a known, enforced codec.
 pub trait AudioCodecsFile: AudioFile {
     type Decoder: Decoder;
+    
+    /// Returns the expected [CodecType](symphonia::core::codecs::CodecType).
     fn codec_type() -> symphonia::core::codecs::CodecType;
 
-    /// Loads audio with enforced `Decoder`. `DecodedStream` will always be of this format
+    /// Loads audio with enforced [Decoder]. [DecodedStream] will always be of this format
     fn load_audio(&self) -> Result<DecodedStream<Self, Self::Decoder>, AudioError> {
         let params = self.load_audio_decoded_stream_params()?;
         let decoder = Self::Decoder::try_new(&params.params, &Default::default())?;
@@ -179,6 +186,7 @@ pub trait AudioCodecsFile: AudioFile {
     }
 }
 
+/// A decoder that delegates to a boxed inner decoder (runtime dispatch).
 pub struct DynamicDecoder(pub Box<dyn Decoder>);
 
 impl Decoder for DynamicDecoder {

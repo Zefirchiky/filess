@@ -2,6 +2,7 @@ use crate::{define_custom_quality_image, define_file, define_image_file};
 
 #[cfg(feature = "image")]
 #[derive(Debug, Clone, Copy)]
+/// Quality configuration for JPEG encoding.
 pub struct JpegConfig {
     /// 1-10, 1 - worst, 100 - best. Default: 75
     pub quality: u8,

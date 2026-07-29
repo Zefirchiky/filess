@@ -1,5 +1,6 @@
 use crate::{define_custom_quality_image, define_file, define_image_file};
 
+/// Compression speed configuration for GIF encoding.
 pub struct GifConfig {
     /// 1-30, 1 - slowest lossless, 30 - fastest. 10 is good. Default: 1
     pub speed: i32,

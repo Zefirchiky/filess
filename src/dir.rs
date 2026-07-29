@@ -6,6 +6,7 @@ use crate::{DirFile, traits::FsElement};
 use crate::traits::FileTrait;
 
 #[derive(Debug, thiserror::Error)]
+/// Errors that can occur when creating a [Dir].
 pub enum DirCreationError {
     #[error("{0:?} is not a directory")]
     NotADir(PathBuf),
@@ -13,8 +14,8 @@ pub enum DirCreationError {
 
 /// A directory structure, simplifies work with multiple files.
 /// 
-/// For any available file use `Dir<FileType>`.
-/// For any file or dir - `Dir<DirFile<FileType, FileType>>`
+/// For any available file use [Dir<FileType>].
+/// For any file or dir - [Dir<DirFile<FileType, FileType>>]
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Dir<F: FsElement> {
@@ -23,12 +24,13 @@ pub struct Dir<F: FsElement> {
     pub elements: Vec<F>,
 }
 
+/// A [Dir] that can hold any file or sub-directory type.
 pub type DirAny = Dir<crate::DirFileAny>;
 
 impl<F: FsElement> FsElement for Dir<F> {
     type TryNewError = DirCreationError;
     
-    /// Creates a new `Dir` instance from a given path.
+    /// Creates a new [Dir] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     fn try_new(dir: impl AsRef<Path>) -> Result<Self, Self::TryNewError> {
@@ -78,7 +80,7 @@ impl<F: FsElement> crate::traits::AsyncFsElement for Dir<F> {
 }
 
 impl<F: FsElement> Dir<F> {
-    /// Creates a new `Dir` instance from a given path.
+    /// Creates a new [Dir] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     /// 
@@ -87,16 +89,16 @@ impl<F: FsElement> Dir<F> {
         <Dir<F> as FsElement>::new(path)
     }
     
-    /// Creates a new `Dir` instance from a given path.
+    /// Creates a new [Dir] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     pub fn try_new(path: impl AsRef<Path>) -> Result<Self, <Dir<F> as FsElement>::TryNewError> {
         <Dir<F> as FsElement>::try_new(path)
     }
 
-    /// Will create a this directory and recursively create all child files and directories.
+    /// Creates this directory and recursively creates all child files and directories.
     ///
-    /// It is recommended to use async version of this method
+    /// For async, use [acreate_all](Self::acreate_all).
     pub fn create_all(&self) -> io::Result<()> {
         self.create()?;
         for file in &self.elements {
@@ -106,12 +108,22 @@ impl<F: FsElement> Dir<F> {
         Ok(())
     }
 
-    /// Push a `F` to this directory. Path should be relative to the folder
+    /// Push an element to this directory.
+    ///
+    /// ```ignore
+    /// let mut dir = Dir::<Json>::new("path");
+    /// dir.push(Json::new("file.json"));
+    /// ```
     pub fn push(&mut self, file: F) {
         self.elements.push(file)
     }
 
-    /// Walks through dir with `walkdir`
+    /// Walks through dir with [walkdir].
+    ///
+    /// ```ignore
+    /// let dir = Dir::<File>::new("path");
+    /// for entry in dir.walk() { ... }
+    /// ```
     #[cfg(feature = "walk")]
     pub fn walk(&self) -> walkdir::WalkDir {
         walkdir::WalkDir::new(&self)
@@ -125,9 +137,9 @@ impl<F: FsElement> Dir<F> {
 
     /// Uses glob pattern to find files, and converts them into `F`
     /// 
-    /// Panics if pattern is incorrect (TODO: Custom error)
+    /// Panics if pattern is incorrect trying to find non `F` files (TODO: Custom error)
     /// 
-    /// For something more advanced, use `filess::glob` directly
+    /// For something more advanced, use [filess::glob](crate::glob) directly
     #[cfg(feature = "glob")]
     pub fn glob(&self, pattern: &str) -> Vec<Result<F, glob::GlobError>> {
         glob::glob(pattern).unwrap()
@@ -136,11 +148,11 @@ impl<F: FsElement> Dir<F> {
             .collect()
     }
     
-    /// Uses glob pattern to find files, and converts them into `F`
+    /// Uses glob pattern with custom options to find files, and converts them into `F`
     /// 
     /// Panics if pattern is incorrect
     /// 
-    /// For something more advanced, use `filess::glob` directly
+    /// For something more advanced, use [filess::glob](crate::glob) directly
     #[cfg(feature = "glob")]
     pub fn glob_with(&self, pattern: &str, options: glob::MatchOptions) -> Vec<Result<F, glob::GlobError>> {
         glob::glob_with(pattern, options).unwrap()
@@ -151,14 +163,23 @@ impl<F: FsElement> Dir<F> {
 }
 
 impl<F: crate::traits::FileTrait> Dir<F> {
+    /// Loads content of every file in this directory.
     pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
         self.elements.iter().map(|f| f.load()).collect()
+    }
+
+    /// Saves data (one chunk per file) to every file in this directory.
+    pub fn save_files(&self, data: Vec<Vec<u8>>) -> io::Result<()> {
+        for (f, d) in self.elements.iter().zip(data) {
+            f.save(d)?;
+        }
+        Ok(())
     }
 }
 
 #[cfg(feature = "async")]
 impl<F: crate::traits::AsyncFsElement> Dir<F> {
-    /// Creates all the elements inside the folder, including the folder
+    /// Async version of [Dir::create_all].
     pub async fn acreate_all(&self) -> io::Result<()> {
         use crate::traits::AsyncFsElement;
 
@@ -172,6 +193,7 @@ impl<F: crate::traits::AsyncFsElement> Dir<F> {
 
 #[cfg(feature = "async")]
 impl<F: FileTrait + 'static> Dir<F> {
+    /// Async version of [Dir::load_files].
     pub async fn aload_files(&self) -> io::Result<Vec<Vec<u8>>> {
         use crate::traits::AsyncFileTrait;
             
@@ -197,6 +219,7 @@ impl<F: FileTrait + 'static> Dir<F> {
 
 #[cfg(feature = "_any_serde_model")]
 impl<F: crate::traits::ModelFile + 'static> Dir<F> {
+    /// Deserializes each byte vector using the corresponding file's format.
     pub fn self_bytes_to_models<T: for<'de> serde::Deserialize<'de>>(
         &self,
         data: Vec<Vec<u8>>,
@@ -208,10 +231,12 @@ impl<F: crate::traits::ModelFile + 'static> Dir<F> {
             .collect()
     }
 
+    /// Loads and deserializes all files in the directory.
     pub fn load_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
         Ok(self.self_bytes_to_models(self.load_files()?)?)
     }
 
+    /// Async version of [Dir::load_models].
     #[cfg(feature = "async")]
     pub async fn aload_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
         Ok(self.self_bytes_to_models(self.aload_files().await?)?)

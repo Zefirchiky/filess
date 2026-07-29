@@ -4,6 +4,7 @@ use image::codecs::png::{CompressionType, FilterType};
 
 #[cfg(feature = "image")]
 #[derive(Debug, Clone, Copy)]
+/// Compression and filter configuration for PNG encoding.
 pub struct PngConfig {
     pub compression: CompressionType,
     pub filter: FilterType,

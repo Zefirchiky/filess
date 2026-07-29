@@ -67,8 +67,9 @@ macro_rules! define_file_types {
                 Ok(Self::from_ext(file))
             }
             
-            fn change_path(&mut self, path: std::path::PathBuf) {
-                crate::match_self_1_arg!(self, change_path, path, $fallback, $($feature $variant,)*);
+            fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
+                let path: &std::path::Path = path.as_ref().into();
+                crate::match_self_1_arg!(self, _rename_file, path, $fallback, $($feature $variant,)*);
             }
 
             fn ext() -> &'static [&'static str] {

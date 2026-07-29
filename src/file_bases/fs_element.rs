@@ -1,9 +1,11 @@
 use std::{fmt::Debug, fs, path::{Path, PathBuf}};
 
-pub trait FsElementBoundries: Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send {}
-impl<F: FsElement> FsElementBoundries for F {}
+/// Super-trait bundling the bounds required by [FsElement].
+pub trait FsElementBoundaries: Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send {}
+impl<F: FsElement> FsElementBoundaries for F {}
 
-pub trait FsElement: FsElementBoundries {
+/// Common operations for files and directories.
+pub trait FsElement: FsElementBoundaries {
     type TryNewError: std::error::Error;
     
     /// Creates new file or dir
@@ -20,20 +22,27 @@ pub trait FsElement: FsElementBoundries {
     /// Removes file or dir from file system
     fn remove(&self) -> std::io::Result<()>;
     
-    /// Copies file or dir in file system
+    /// Copies file or dir to the new path.
+    /// 
+    /// Corresponds to [std::fs::copy]
+    /// 
+    /// Does not consume this instance.
+    /// New instance will be returned.
     fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
         fs::copy(self, &path)?;
         Ok(Self::new(path))
     }
     
     /// Renames the file or dir in a file system
-    /// Corresponds to `fs::rename`
-    fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::rename(self, &path)?;
-        Ok(Self::new(path))
+    /// 
+    /// Corresponds to [fs::rename]
+    fn rename(&mut self, path: impl AsRef<Path>) -> std::io::Result<()> {
+        fs::rename(&self, &path)?;
+        self.rename_file(path);
+        Ok(())
     }
-    /// Changes underlying `PathBuf`
-    /// Different from `Self::rename` in that it does NOT change file or dir in the file system
+    /// Changes underlying [PathBuf]
+    /// Different from [Self::rename] in that it does NOT change file or dir in the file system
     fn rename_file(&mut self, name: impl AsRef<Path>);
     
     /// Moves file in trash
@@ -45,6 +54,7 @@ pub trait FsElement: FsElementBoundries {
 
 #[cfg(feature = "async")]
 #[async_trait::async_trait]
+/// Async counterpart of [FsElement].
 pub trait AsyncFsElement: FsElement {
     /// Creates file or dir in file system
     async fn acreate(&self) -> std::io::Result<()>;
@@ -56,7 +66,7 @@ pub trait AsyncFsElement: FsElement {
         Ok(Self::new(path))
     }
     /// Renames the file or a dir in a file system
-    /// Corresponds to `fs::rename`
+    /// Corresponds to [fs::rename]
     async fn arename(&self, path: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
         tokio::fs::rename(self, &path).await?;
         Ok(Self::new(path))

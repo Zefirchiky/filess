@@ -2,6 +2,7 @@ use crate::define_file;
 
 #[cfg(feature = "serde")]
 #[derive(Debug, thiserror::Error)]
+/// Errors from TOML model serialization/deserialization.
 pub enum TomlModelError {
     #[cfg(feature = "toml")]
     #[error("Seder Deserialization Error: {0}")]

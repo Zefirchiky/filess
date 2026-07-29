@@ -2,6 +2,7 @@ use crate::define_file;
 
 #[cfg(feature = "serde")]
 #[derive(Debug, thiserror::Error)]
+/// Errors from JSON model serialization/deserialization.
 pub enum JsonModelError {
     #[cfg(feature = "json")]
     #[error("Seder Error: {0}")]

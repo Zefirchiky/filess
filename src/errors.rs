@@ -1,3 +1,4 @@
+//! Re-exports of error types for the crate.
 #[cfg(feature = "audio")]
 pub use crate::file_bases::audio_file::AudioError;
 #[cfg(feature = "image")]

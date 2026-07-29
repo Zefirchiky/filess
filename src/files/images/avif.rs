@@ -1,6 +1,7 @@
 use crate::{define_custom_quality_image, define_file, define_image_file};
 
 #[cfg(feature = "image")]
+/// Quality and speed configuration for AVIF encoding.
 pub struct AvifConfig {
     /// 1-10, 1 - slowest, 10 - fastest. Default: 4
     pub speed: u8,

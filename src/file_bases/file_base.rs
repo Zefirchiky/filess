@@ -4,6 +4,7 @@ use std::{
 
 use crate::traits::FsElement;
 
+/// Errors that can occur when creating or validating a file path for a given type.
 #[derive(Debug, thiserror::Error)]
 pub enum FileCreationError<F: FileTrait> {
     #[error("Extension should be a valid UTF-8")]
@@ -25,20 +26,18 @@ pub struct FileBase<F: FileTrait> {
 }
 
 impl<F: FileTrait> FileBase<F> {
-    /// Creates a new FileHandler.
+    /// Creates a new [FileBase].
     ///
     /// # Panics
     ///
-    /// Panics if the path is not a file or if the file does not have the correct extension.
+    /// Panics if the path does not have the correct extension.
     pub fn new(file: impl AsRef<Path>) -> Self {
         Self::try_new(file).unwrap()
     }
     
-    /// Creates a new FileHandler.
+    /// Creates a new [FileBase], validating the extension.
     ///
-    /// # Panics
-    ///
-    /// Panics if the path is not a file or if the file does not have the correct extension.
+    /// Returns [Err] if the path does not have the correct extension for `F`.
     pub fn try_new(file: impl AsRef<Path>) -> Result<Self, F::TryNewError> {
         let file = file.as_ref().to_path_buf();
 
@@ -115,30 +114,38 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
     }
 }
 
+/// Core trait for typed file wrappers.
+///
+/// Provides file I/O, path validation, extension checks, and optional [infer](infer).
 pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + Default {
     fn new(path: impl AsRef<Path>) -> Self {
         <Self as FileTrait>::try_new(path).unwrap()
     }
     fn try_new(path: impl AsRef<Path>) -> Result<Self, Self::TryNewError>;
-    
-    fn change_path(&mut self, path: PathBuf);
+
+    /// Changes underlying [PathBuf]
+    /// 
+    /// Different from [FsElement::rename] in that it does NOT change file or dir in the file system
+    fn _rename_file(&mut self, path: impl AsRef<Path>);
     /// Initial file bytes, if needed
     fn file_init_bytes() -> Option<&'static [u8]> {
         None
     }
     /// Possible file extension that will be forced
     fn ext() -> &'static [&'static str];
+    /// Human-readable name for the extension
     fn ext_name() -> &'static str;
+    /// MIME types associated with this file type
     fn mime_type() -> &'static [&'static str];
 
-    /// Returns `std::fs::File` for this `File`
+    /// Returns [std::fs::File] for this file
     fn as_file(&self) -> std::io::Result<fs::File> {
         fs::File::create(self)
     }
 
     /// Saves data to the file.
     ///
-    /// File will be created if it didn't exist.
+    /// File and parent directories will be created if they don't exist.
     fn save(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
         if let Some(parent) = self.as_ref().parent() {
             create_dir_all(parent)?
@@ -149,7 +156,7 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + Default 
 
     /// Loads data from a file.
     ///
-    /// If file didn't exist, it will be created and `F::file_init_bytes()` will be returned.
+    /// If file didn't exist, it will be created and [F::file_init_bytes](Self::file_init_bytes) will be returned.
     fn load(&self) -> std::io::Result<Vec<u8>> {
         if !self.as_ref().try_exists()? {
             self.create()?;
@@ -157,19 +164,13 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + Default 
         fs::read(self.as_ref())
     }
 
-    /// Opens file in default program using `open::that_detached()`
-    ///
-    /// For other methods use `open` crate directly with `file.as_ref()`
-    #[cfg(feature = "open")]
-    fn open(&self) -> std::io::Result<()> {
-        open::that_detached(self.as_ref())
-    }
-
+    /// Infers the file type from the content using the [infer](infer) crate.
     #[cfg(feature = "infer")]
     fn infer(&self) -> std::io::Result<Option<infer::Type>> {
         Ok(infer::get(&self.load()?))
     }
 
+    /// Checks whether the stored data matches the declared extension.
     #[cfg(feature = "infer")]
     fn is_correct_data(&self) -> std::io::Result<bool> {
         if let Some(t) = self.infer()? {
@@ -181,7 +182,7 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + Default 
 
     /// Enforces file data to be of file type.
     ///
-    /// It's an io operation, use `aenforce` if you don't want this operation to lag the program.
+    /// It's an io operation, use [aenforce](AsyncFileTrait::aenforce) if you don't want this operation to lag the program.
     #[cfg(feature = "infer")]
     fn enforce(&self) -> std::io::Result<()> {
         assert!(
@@ -224,29 +225,11 @@ impl<T: FileTrait> FsElement for T {
         fs::remove_file(self)
     }
 
-    /// Corresponds to `fs::copy`.
-    ///
-    /// Copies file to the new path.
-    /// Does not consume this file.
-    /// New file instance will be returned.
-    fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::copy(self, &path)?;
-        Ok(<Self as FileTrait>::new(path))
-    }
-    
-    /// Renames the file in a file system.
+    /// Changes underlying [PathBuf]
     /// 
-    /// Corresponds to `fs::rename`.
-    fn rename(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::rename(self, &path)?;
-        Ok(<Self as FileTrait>::new(path))
-    }
-
-    /// Changes underlying `PathBuf`
-    /// 
-    /// Different from `Self::rename` in that it does NOT change file or dir in the file system
+    /// Different from [Self::rename] in that it does NOT change file or dir in the file system
     fn rename_file(&mut self, name: impl AsRef<Path>) {
-        self.change_path(name.as_ref().into());
+        self._rename_file(name);
     }
 }
 
@@ -278,8 +261,10 @@ impl<T: FileTrait> crate::traits::AsyncFsElement for T {
 #[cfg(feature = "async")]
 impl<T: FileTrait + crate::traits::AsyncFsElement> AsyncFileTrait for T {}
 
+/// Async counterpart of [FileTrait].
 #[cfg(feature = "async")]
 pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
+    /// Async version of [FileTrait::save].
     async fn asave(&self, data: impl AsRef<[u8]>) -> std::io::Result<()> {
         if let Some(parent) = self.as_ref().parent() {
             tokio::fs::create_dir_all(parent).await?
@@ -288,6 +273,7 @@ pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
         Ok(())
     }
 
+    /// Async version of [FileTrait::load].
     async fn aload(&self) -> std::io::Result<Vec<u8>> {
         if !tokio::fs::try_exists(self).await? {
             self.acreate().await?;
@@ -295,11 +281,13 @@ pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
         tokio::fs::read(&self.as_ref()).await
     }
 
+    /// Async version of [FileTrait::infer].
     #[cfg(feature = "infer")]
     async fn ainfer(&self) -> std::io::Result<Option<infer::Type>> {
         Ok(infer::get(&self.aload().await?))
     }
 
+    /// Async version of [FileTrait::is_correct_data].
     #[cfg(feature = "infer")]
     async fn ais_correct_data(&self) -> std::io::Result<bool> {
         if let Some(t) = self.ainfer().await? {
@@ -309,7 +297,7 @@ pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
         }
     }
 
-    /// Enforces file data to be of file type
+    /// Async version of [FileTrait::enforce]
     #[cfg(feature = "infer")]
     async fn aenforce(&self) -> std::io::Result<()> {
         assert!(

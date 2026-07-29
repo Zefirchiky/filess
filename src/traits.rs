@@ -1,3 +1,4 @@
+//! Re-exports of all public traits like [FileTrait], [FsElement], [ImageFile], etc.
 #[cfg(feature = "audio")]
 pub use crate::file_bases::audio_file::{AudioCodecsFile, AudioContainerFile, AudioFile};
 pub use crate::file_bases::file_base::FileTrait;

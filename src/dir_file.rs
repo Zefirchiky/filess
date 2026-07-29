@@ -7,5 +7,7 @@ pub enum DirFile<F1: FsElement, F2: FsElement> {
     File(F2),
 }
 
+/// Recursive type alias allowing [Dir](crate::Dir) to nest files and sub-dirs arbitrarily.
+// FIXME: This type is overly nested and hard to use.
 pub type DirFileAny =
-    DirFile<DirFile<DirFile<DirFile<FileType, FileType>, FileType>, FileType>, FileType>;   // FIXME: WHAT THE FUCK IS THIS 😭
+    DirFile<DirFile<DirFile<DirFile<FileType, FileType>, FileType>, FileType>, FileType>;

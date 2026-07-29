@@ -50,6 +50,7 @@ define_file_types! {
 
 #[cfg(feature = "_any_model")]
 #[derive(Debug, thiserror::Error)]
+/// Errors that can occur when working with [ModelType].
 pub enum ModelTypeError {
     #[cfg(feature = "json")]
     #[error("Json error: {0}")]
@@ -69,6 +70,7 @@ impl crate::errors::ModelIoError for ModelTypeError {}
 
 #[cfg(feature = "_any_model")]
 #[derive(Debug, Clone)]
+/// A dynamic model file that can be Json, Toml, or Ron at runtime.
 pub enum ModelType {
     #[cfg(feature = "just_json")]
     Json(crate::Json),
@@ -80,8 +82,8 @@ pub enum ModelType {
 
 #[cfg(feature = "_any_model")]
 impl FileTrait for ModelType {
-    fn change_path(&mut self, path: std::path::PathBuf) {
-        crate::match_self_1_arg!(self, change_path, path,
+    fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
+        crate::match_self_1_arg!(self, _rename_file, path,
             "just_json" Json,
             "just_toml" Toml,
             "just_ron" Ron,
@@ -173,6 +175,9 @@ impl From<&std::path::Path> for ModelType {
 
 #[cfg(feature = "_any_model")]
 impl ModelType {
+    /// Creates a [ModelType] from a path by matching its extension.
+    ///
+    /// Returns [None] if no supported model extension is found.
     #[allow(unused_variables)]
     pub fn from_ext(path: impl AsRef<std::path::Path>) -> Option<Self> {
         let path_ref = path.as_ref();
@@ -198,7 +203,7 @@ impl ModelType {
 impl crate::traits::ModelFile for ModelType {
     type Error = ModelTypeError;
 
-    /// Use `self_model_to_bytes` instead
+    /// Use [Self::self_model_to_bytes] instead
     fn model_to_bytes(_model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         panic!("Use self_model_to_bytes instead")
     }
@@ -276,7 +281,7 @@ define_file_types!(
     "alac" Alac,
 );
 
-// FIXME: Return type might need to be something like `DynamicReader`
+// FIXME: Return type might need to be something like [DynamicReader]
 // #[cfg(feature = "audio")]
 // impl AudioTypes {
 //     fn load_audio(&self) -> Result<crate::DecodedStream<Self, crate::DynamicDecoder>, crate::AudioError> {

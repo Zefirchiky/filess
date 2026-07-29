@@ -2,6 +2,7 @@ use crate::define_file;
 
 #[cfg(feature = "serde")]
 #[derive(Debug, thiserror::Error)]
+/// Errors from RON model serialization/deserialization.
 pub enum RonModelError {
     #[cfg(feature = "ron")]
     #[error("Seder Error: {0}")]
