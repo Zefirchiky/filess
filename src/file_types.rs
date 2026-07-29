@@ -205,7 +205,7 @@ impl ModelType {
 impl crate::traits::ModelFile for ModelType {
     type Error = ModelTypeError;
 
-    /// Use [Self::self_model_to_bytes] instead
+    /// Use [ModelFile::self_model_to_bytes](crate::traits::ModelFile::self_model_to_bytes) instead
     fn model_to_bytes(_model: &impl serde::Serialize) -> Result<Vec<u8>, Self::Error> {
         panic!("Use self_model_to_bytes instead")
     }

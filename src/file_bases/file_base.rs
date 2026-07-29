@@ -227,7 +227,7 @@ impl<T: FileTrait> FsElement for T {
 
     /// Changes underlying [PathBuf]
     /// 
-    /// Different from [Self::rename] in that it does NOT change file or dir in the file system
+    /// Different from [FsElement::rename] in that it does NOT change file or dir in the file system
     fn rename_file(&mut self, name: impl AsRef<Path>) {
         self._rename_file(name);
     }

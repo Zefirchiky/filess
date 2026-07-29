@@ -1,10 +1,63 @@
 //! Simplified file primitives.
 //!
-//! `filess` should be used to enforce file types needed.
+//! Use `filess` to enforce file types at the type level — each format is a type (e.g. [Json],
+//! [Png], [Flac]). All integrations are optional behind feature flags.
 //!
-//! It was designed to be lightweight, with all integrations being optional.
+//! # Supported formats (30 total)
 //!
-//! Each file type has it's own feature, which is the reason for so many feature flags.
+//! **Text:** [Json], [Toml], [Ron], [Md], [Txt]
+//!
+//! **Image:** [Jpeg], [Png], [WebP], [Avif], [Tiff], [Gif], [Bmp], [Exr], [Ff], [Hdr], [Ico],
+//! [Pnm], [Qoi], [Tga]
+//!
+//! **Audio:** [Ogg], [Mkv], [Flac], [Wav], [Aiff], [Mp4], [Mp3], [Mp2], [Mp1], [Mpa], [Alac]
+//!
+//! **Combined:** [File], [Image], [Audio], [FileType], [TextTypes], [ImageTypes], [AudioTypes],
+//! [ModelType]
+//!
+//! # Integrations
+//!
+//! | Integration | Feature | What it adds |
+//! |-------------|---------|-------------|
+//! | **Serde** | `serde` | [ModelFile](traits::ModelFile) — `save_model`, `load_model` |
+//! | **Image** | `image` | [ImageFile](traits::ImageFile) — `save_image`, `load_image` + custom quality for [Jpeg], [Png], [Gif], [Avif] |
+//! | **Audio** | `audio` | [AudioFile](traits::AudioFile) — `load_audio` via symphonia |
+//! | **Async** | `async` | `a`-prefixed variants of all methods + [Temporary] offload |
+//! | **Open** | `open` | [OpenTrait](traits::OpenTrait) — `open`, `open_with` |
+//! | **Infer** | `infer` | [FileTrait](traits::FileTrait) — `infer`, `enforce` data correctness |
+//! | **Walk** | `walk` | [Dir] — `walk` directories |
+//! | **Glob** | `glob` | [Dir] — `glob`, `glob_with` |
+//! | **Trash** | `trash` | [FsElement](traits::FsElement) — `trash` files/dirs |
+//!
+//! # Types
+//!
+//! [Temporary]\<F\> — auto-cleaning wrapper that deletes the file (and empty parent dirs) on drop.
+//!
+//! [Dir]\<F\> — directory containing multiple files. Supports load/save all, glob, walk, async.
+//!
+//! [FileType], [ModelType], [TextTypes], [ImageTypes], [AudioTypes] — enums over all types in each
+//! category for runtime dispatch without boxing.
+//!
+//! # Usage
+//!
+//! ```ignore
+//! let json = Json::new("path/to/file.json");
+//! let data: Vec<u8> = json.load()?;
+//! let model: MyModel = json.load_model()?;        // serde
+//! json.save(&data)?;
+//! json.save_model(&model)?;                        // serde
+//!
+//! let img = Temporary::new(Jpeg::new("img.jpg"));  // auto-deleted on drop
+//! let image = img.load_image()?;                   // image
+//! img.save_image(&image)?;
+//! img.save_image_custom(&image, JpegConfig { quality: 40 })?;
+//!
+//! let audio = Flac::new("track.flac").load_audio()?; // symphonia
+//! let stream: DecodedStream = audio;
+//!
+//! // Each fn has async variants (prefixed with `a`):
+//! Jpeg::new("img.jpg").asave_image(&image).await?;
+//! ```
 #![deny(unreachable_pub)]
 #![allow(refining_impl_trait, async_fn_in_trait)]
 mod dir;
