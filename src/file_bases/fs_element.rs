@@ -1,7 +1,13 @@
 use std::{fmt::Debug, fs, path::{Path, PathBuf}};
 
 /// Super-trait bundling the bounds required by [FsElement].
-pub trait FsElementBoundaries: Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send {}
+#[cfg(not(feature = "serde"))]
+pub trait FsElementBoundaries: Default + Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send {}
+#[cfg(not(feature = "serde"))]
+impl<F: FsElement> FsElementBoundaries for F {}
+#[cfg(feature = "serde")]
+pub trait FsElementBoundaries: Default + Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send + serde::Serialize + for<'de> serde::Deserialize<'de> {}
+#[cfg(feature = "serde")]
 impl<F: FsElement> FsElementBoundaries for F {}
 
 /// Common operations for files and directories.

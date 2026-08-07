@@ -114,19 +114,10 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
     }
 }
 
-#[cfg(not(feature = "serde"))]
-pub trait FileRestrains: Default {}
-#[cfg(not(feature = "serde"))]
-impl<T: Default> FileRestrains for T {}
-#[cfg(feature = "serde")]
-pub trait FileRestrains: Default + serde::Serialize + serde::de::DeserializeOwned {}
-#[cfg(feature = "serde")]
-impl<T: Default + serde::Serialize + serde::de::DeserializeOwned> FileRestrains for T {}
-
 /// Core trait for typed file wrappers.
 ///
 /// Provides file I/O, path validation, extension checks, and optional [infer](infer).
-pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> + FileRestrains {
+pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     fn new(path: impl AsRef<Path>) -> Self {
         <Self as FileTrait>::try_new(path).unwrap()
     }

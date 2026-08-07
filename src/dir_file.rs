@@ -2,6 +2,8 @@ use crate::{Dir, FileType, traits::{FileTrait, FsElement}};
 
 /// Represents either file `F1` or a dir containing `F2`
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(bound = "F1: serde::Serialize + serde::de::DeserializeOwned, F2: serde::Serialize + serde::de::DeserializeOwned"))]
 pub enum DirFile<F1: FsElement, F2: FileTrait> {
     Dir(Dir<F1>),
     File(F2),
@@ -34,6 +36,12 @@ impl<F1: FsElement, F2: FileTrait> From<std::path::PathBuf> for DirFile<F1, F2> 
 impl<F1: FsElement, F2: FileTrait> From<&'static str> for DirFile<F1, F2> {
     fn from(path: &'static str) -> Self {
         Self::File(<F2 as FsElement>::new(path))
+    }
+}
+
+impl<F1: FsElement, F2: FileTrait> Default for DirFile<F1, F2> {
+    fn default() -> Self {
+        Self::File(F2::default())
     }
 }
 
