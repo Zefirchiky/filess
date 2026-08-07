@@ -45,7 +45,7 @@ impl<A: AudioFile, D: Decoder> DecodedStream<A, D> {
         let decoded = self.decoder.decode(&packet).ok()?;
 
         // If this is the first frame, or format changed, initialize the SampleBuffer
-        if let None = self.sample_buf {
+        if self.sample_buf.is_none() {
             self.sample_buf = Some(SampleBuffer::new(
                 decoded.capacity() as u64,
                 *decoded.spec(),
@@ -88,12 +88,12 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if let Some(ref mut buf) = self.sample_buf {
-                if self.sample_cursor < buf.len() {
-                    let sample = buf.samples()[self.sample_cursor];
-                    self.sample_cursor += 1;
-                    return Some(sample);
-                }
+            if let Some(ref mut buf) = self.sample_buf
+                && self.sample_cursor < buf.len()
+            {
+                let sample = buf.samples()[self.sample_cursor];
+                self.sample_cursor += 1;
+                return Some(sample);
             }
 
             match self.reader.next_packet() {
@@ -174,7 +174,7 @@ pub trait AudioContainerFile: AudioFile {
 /// Trait for audio files with a known, enforced codec.
 pub trait AudioCodecsFile: AudioFile {
     type Decoder: Decoder;
-    
+
     /// Returns the expected [CodecType](symphonia::core::codecs::CodecType).
     fn codec_type() -> symphonia::core::codecs::CodecType;
 

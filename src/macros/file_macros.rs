@@ -7,7 +7,7 @@ macro_rules! define_file {
         [$($ext:expr),*]
         $(,$init_bytes:expr)?
     ) => {
-        use crate::{primitives::FileBase, traits::FileTrait};
+        use $crate::{primitives::FileBase, traits::FileTrait};
 
         #[derive(Debug, Default, Clone, PartialEq)]
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -17,7 +17,7 @@ macro_rules! define_file {
 
         impl $name {
             #[doc = concat!("Creates new ", stringify!($name), ".")]
-            pub fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, <Self as crate::traits::FsElement>::TryNewError> { // A convenience method, otherwise user will need to import [FileTrait]
+            pub fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, <Self as $crate::traits::FsElement>::TryNewError> { // A convenience method, otherwise user will need to import [FileTrait]
                 <Self as FileTrait>::try_new(path)      // ? : Duplication that might be unnecessary???
                 // TODO: Check binary size generated
             }
@@ -233,7 +233,7 @@ macro_rules! define_image_file {
     ) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::traits::ImageFile for $name {
+            impl $crate::traits::ImageFile for $name {
                 fn image_format() -> image::ImageFormat {
                     $format
                 }
@@ -247,7 +247,7 @@ macro_rules! define_custom_quality_image {
     ($name:ident, $config:ident) => {
         #[cfg(feature = "image")]
         const _: () = {
-            impl crate::traits::ImageQualityEncoding for $name {
+            impl $crate::traits::ImageQualityEncoding for $name {
                 type Config = $config;
             }
         };
@@ -258,7 +258,7 @@ macro_rules! define_custom_quality_image {
 macro_rules! define_audio_file {
     ($name:ident, $reader:ident) => {
         #[cfg(feature = "audio")]
-        impl crate::traits::AudioFile for $name {
+        impl $crate::traits::AudioFile for $name {
             type Reader = symphonia::default::formats::$reader;
         }
     };
@@ -268,7 +268,7 @@ macro_rules! define_audio_file {
 macro_rules! define_audio_codecs_file {
     ($name:ident, $decoder:ident, $codecs_type:ident) => {
         #[cfg(feature = "audio")]
-        impl crate::traits::AudioCodecsFile for $name {
+        impl $crate::traits::AudioCodecsFile for $name {
             type Decoder = symphonia::default::codecs::$decoder;
             fn codec_type() -> symphonia::core::codecs::CodecType { symphonia::core::codecs::$codecs_type }
         }
@@ -279,7 +279,7 @@ macro_rules! define_audio_codecs_file {
 macro_rules! define_audio_container_file {
     ($name:ident) => {
         #[cfg(feature = "audio")]
-        impl crate::traits::AudioContainerFile for $name {}
+        impl $crate::traits::AudioContainerFile for $name {}
     };
 }
 

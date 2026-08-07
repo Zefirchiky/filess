@@ -17,12 +17,12 @@ pub enum ImageIoError {
 pub trait ImageFile: FileTrait {
     /// Saves [DynamicImage] with default settings
     fn save_image(&self, img: &DynamicImage) -> Result<(), image::ImageError> {
-        img.save(&self)
+        img.save(self)
     }
 
     /// Loads and decodes an image from the file.
     fn load_image(&self) -> Result<DynamicImage, image::ImageError> {
-        Ok(ImageReader::open(&self)?.decode()?)
+        ImageReader::open(self)?.decode()
     }
 
     /// Returns the image format for encoding.
@@ -37,7 +37,7 @@ pub trait AsyncImageFile: ImageFile + crate::traits::AsyncFileTrait {
         use std::io::{BufWriter, Cursor};
 
         let mut buf = BufWriter::new(Cursor::new(vec![]));
-        img.write_to(&mut buf, image::ImageFormat::from_path(&self)?)?;
+        img.write_to(&mut buf, image::ImageFormat::from_path(self)?)?;
         self.asave(&buf.buffer()).await?;
         Ok(())
     }
@@ -46,7 +46,7 @@ pub trait AsyncImageFile: ImageFile + crate::traits::AsyncFileTrait {
     async fn aload_image(&self) -> Result<DynamicImage, image::ImageError> {
         use std::io::{BufReader, Cursor};
 
-        Ok(ImageReader::new(BufReader::new(Cursor::new(self.aload().await?))).decode()?)
+        ImageReader::new(BufReader::new(Cursor::new(self.aload().await?))).decode()
     }
 }
 
@@ -112,7 +112,7 @@ pub trait AsyncImageQualityEncoding: ImageQualityEncoding + crate::traits::Async
         F::Output: Future<Output = Result<(), ImageIoError>>,
         Self: Sync + Send,
     {
-        (offload)(Box::new(move || self.save_image_custom(&img, config))).await
+        (offload)(Box::new(move || self.save_image_custom(img, config))).await
     }
 }
 

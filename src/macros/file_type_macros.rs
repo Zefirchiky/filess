@@ -54,11 +54,12 @@ macro_rules! define_file_types {
         $($feature:literal $variant:ident,)*
     ) => {
         #[derive(Debug, Clone, PartialEq)]
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
         pub enum $name {
-            $fallback(crate::$fallback),
+            $fallback($crate::$fallback),
             $(
                 #[cfg(feature = $feature)]
-                $variant(crate::$variant),
+                $variant($crate::$variant),
             )*
         }
 
@@ -69,7 +70,7 @@ macro_rules! define_file_types {
             
             fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
                 let path: &std::path::Path = path.as_ref().into();
-                crate::match_self_1_arg!(self, _rename_file, path, $fallback, $($feature $variant,)*);
+                $crate::match_self_1_arg!(self, _rename_file, path, $fallback, $($feature $variant,)*);
             }
 
             fn ext() -> &'static [&'static str] {
@@ -87,20 +88,20 @@ macro_rules! define_file_types {
 
         impl AsRef<std::path::Path> for $name {
             fn as_ref(&self) -> &std::path::Path {
-                crate::match_self!(self, as_ref, $fallback, $($feature $variant,)*);
+                $crate::match_self!(self, as_ref, $fallback, $($feature $variant,)*);
             }
         }
 
         impl AsMut<std::path::Path> for $name {
             fn as_mut(&mut self) -> &mut std::path::Path {
-                crate::match_self!(self, as_mut, $fallback, $($feature $variant,)*);
+                $crate::match_self!(self, as_mut, $fallback, $($feature $variant,)*);
             }
         }
 
         $(
             #[cfg(feature = $feature)]
-            impl From<crate::$variant> for $name {
-                fn from(value: crate::$variant) -> Self {
+            impl From<$crate::$variant> for $name {
+                fn from(value: $crate::$variant) -> Self {
                     $name::$variant(value)
                 }
             }
@@ -111,8 +112,8 @@ macro_rules! define_file_types {
             fn default() -> Self {
                 $(
                     #[cfg(feature = $feature)]
-                    return Self::$variant(crate::$variant::default());
-                    return Self::$fallback(crate::$fallback::default());
+                    return Self::$variant($crate::$variant::default());
+                    return Self::$fallback($crate::$fallback::default());
                 )*
             }
         }
@@ -144,15 +145,15 @@ macro_rules! define_file_types {
                     $(
                         #[cfg(feature = $feature)]
                         {
-                            if crate::$variant::ext().contains(&ext) {
-                                return Self::$variant(crate::$variant::new(&path_ref));
+                            if $crate::$variant::ext().contains(&ext) {
+                                return Self::$variant($crate::$variant::new(&path_ref));
                             }
                         }
                     )*
                 }
 
                 // Default fallback
-                Self::$fallback(crate::$fallback::new(&path_ref))
+                Self::$fallback($crate::$fallback::new(&path_ref))
             }
         }
     }

@@ -126,13 +126,13 @@ impl<F: FsElement> Dir<F> {
     /// ```
     #[cfg(feature = "walk")]
     pub fn walk(&self) -> walkdir::WalkDir {
-        walkdir::WalkDir::new(&self)
+        walkdir::WalkDir::new(self)
     }
 
     /// Moves folder in trash
     #[cfg(feature = "trash")]
     pub fn trash_files(&self) -> Result<(), trash::Error> {
-        trash::delete_all(self.into_iter())
+        trash::delete_all(self.iter())
     }
 
     /// Uses glob pattern to find files, and converts them into `F`
@@ -143,7 +143,6 @@ impl<F: FsElement> Dir<F> {
     #[cfg(feature = "glob")]
     pub fn glob(&self, pattern: &str) -> Vec<Result<F, glob::GlobError>> {
         glob::glob(pattern).unwrap()
-            .into_iter()
             .map(|p| p.map(|f| F::new(f)))
             .collect()
     }
@@ -156,7 +155,6 @@ impl<F: FsElement> Dir<F> {
     #[cfg(feature = "glob")]
     pub fn glob_with(&self, pattern: &str, options: glob::MatchOptions) -> Vec<Result<F, glob::GlobError>> {
         glob::glob_with(pattern, options).unwrap()
-            .into_iter()
             .map(|p| p.map(|f| F::new(f)))
             .collect()
     }
@@ -233,13 +231,13 @@ impl<F: crate::traits::ModelFile + 'static> Dir<F> {
 
     /// Loads and deserializes all files in the directory.
     pub fn load_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
-        Ok(self.self_bytes_to_models(self.load_files()?)?)
+        self.self_bytes_to_models(self.load_files()?)
     }
 
     /// Async version of [Dir::load_models].
     #[cfg(feature = "async")]
     pub async fn aload_models<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<Vec<T>, F::Error> {
-        Ok(self.self_bytes_to_models(self.aload_files().await?)?)
+        self.self_bytes_to_models(self.aload_files().await?)
     }
 }
 
@@ -293,12 +291,12 @@ impl<F: FsElement> Div<Self> for Dir<F> {
     }
 }
 
-impl<F: FsElement> Div<&str> for Dir<F> {
+impl<F: FileTrait> Div<&str> for Dir<F> {
     type Output = DirFile<F, F>;
     fn div(self, rhs: &str) -> Self::Output {
         let new_path = self.join(rhs);
-        if let Some(_) = new_path.extension() {
-            DirFile::File(F::new(&self.join(rhs)))
+        if new_path.extension().is_some() {
+            DirFile::File(<F as FsElement>::new(self.join(rhs)))
         } else {
             DirFile::Dir(Self::new(self.join(rhs)))
         }

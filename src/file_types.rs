@@ -70,6 +70,7 @@ impl crate::errors::ModelIoError for ModelTypeError {}
 
 #[cfg(feature = "_any_model")]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A dynamic model file that can be Json, Toml, or Ron at runtime.
 pub enum ModelType {
     #[cfg(feature = "just_json")]
@@ -147,9 +148,9 @@ impl Default for ModelType {
     fn default() -> Self {
         #[cfg(feature = "just_json")]
         return Self::Json(crate::Json::default());
-        #[cfg(all(feature = "just_toml"))]
+        #[cfg(feature = "just_toml")]
         return Self::Toml(crate::Toml::default());
-        #[cfg(all(feature = "just_ron"))]
+        #[cfg(feature = "just_ron")]
         return Self::Ron(crate::Ron::default());
     }
 }
@@ -186,15 +187,15 @@ impl ModelType {
         if let Some(ext) = path_ref.extension().and_then(|s| s.to_str()) {
             #[cfg(feature = "just_json")]
             if crate::Json::ext().contains(&ext) {
-                return Some(Self::Json(crate::Json::new(&path_ref)));
+                return Some(Self::Json(crate::Json::new(path_ref)));
             }
             #[cfg(feature = "just_toml")]
             if crate::Toml::ext().contains(&ext) {
-                return Some(Self::Toml(crate::Toml::new(&path_ref)));
+                return Some(Self::Toml(crate::Toml::new(path_ref)));
             }
             #[cfg(feature = "just_ron")]
             if crate::Ron::ext().contains(&ext) {
-                return Some(Self::Ron(crate::Ron::new(&path_ref)));
+                return Some(Self::Ron(crate::Ron::new(path_ref)));
             }
         }
         None

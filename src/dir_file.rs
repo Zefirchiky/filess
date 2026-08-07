@@ -1,13 +1,13 @@
-use crate::{Dir, FileType, traits::FsElement};
+use crate::{Dir, FileType, traits::{FileTrait, FsElement}};
 
 /// Represents either file `F1` or a dir containing `F2`
 #[derive(Debug)]
-pub enum DirFile<F1: FsElement, F2: FsElement> {
+pub enum DirFile<F1: FsElement, F2: FileTrait> {
     Dir(Dir<F1>),
     File(F2),
 }
 
-impl<F1: FsElement, F2: FsElement> Clone for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> Clone for DirFile<F1, F2> {
     fn clone(&self) -> Self {
         match self {
             Self::Dir(d) => Self::Dir(d.clone()),
@@ -16,7 +16,7 @@ impl<F1: FsElement, F2: FsElement> Clone for DirFile<F1, F2> {
     }
 }
 
-impl<F1: FsElement, F2: FsElement> AsRef<std::path::Path> for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> AsRef<std::path::Path> for DirFile<F1, F2> {
     fn as_ref(&self) -> &std::path::Path {
         match self {
             Self::Dir(d) => d.as_ref(),
@@ -25,23 +25,23 @@ impl<F1: FsElement, F2: FsElement> AsRef<std::path::Path> for DirFile<F1, F2> {
     }
 }
 
-impl<F1: FsElement, F2: FsElement> From<std::path::PathBuf> for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> From<std::path::PathBuf> for DirFile<F1, F2> {
     fn from(path: std::path::PathBuf) -> Self {
-        Self::File(F2::new(path))
+        Self::File(<F2 as FsElement>::new(path))
     }
 }
 
-impl<F1: FsElement, F2: FsElement> From<&'static str> for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> From<&'static str> for DirFile<F1, F2> {
     fn from(path: &'static str) -> Self {
-        Self::File(F2::new(path))
+        Self::File(<F2 as FsElement>::new(path))
     }
 }
 
-impl<F1: FsElement, F2: FsElement> FsElement for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> FsElement for DirFile<F1, F2> {
     type TryNewError = F2::TryNewError;
 
     fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
-        Ok(Self::File(F2::try_new(path)?))
+        Ok(Self::File(<F2 as FsElement>::try_new(path)?))
     }
 
     fn create(&self) -> std::io::Result<()> {
@@ -75,7 +75,7 @@ impl<F1: FsElement, F2: FsElement> FsElement for DirFile<F1, F2> {
 
 #[cfg(feature = "async")]
 #[async_trait::async_trait]
-impl<F1: FsElement, F2: crate::traits::FileTrait> crate::traits::AsyncFsElement for DirFile<F1, F2> {
+impl<F1: FsElement, F2: FileTrait> crate::traits::AsyncFsElement for DirFile<F1, F2> {
     async fn acreate(&self) -> std::io::Result<()> {
         match self {
             Self::Dir(d) => d.acreate().await,

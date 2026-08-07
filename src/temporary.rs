@@ -20,7 +20,7 @@ impl<H: FsElement> Temporary<H> {
 
 impl<H: FsElement> AsRef<Path> for Temporary<H> {
     fn as_ref(&self) -> &Path {
-        &self.inner.as_ref()
+        self.inner.as_ref()
     }
 }
 

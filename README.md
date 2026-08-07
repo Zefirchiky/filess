@@ -22,7 +22,7 @@ file2.save_image(&image)?;                          // `Image` integration: save
 // `Image` integration: save `DynamicImage` with custom quality parameters (only available if supports quality settings)
 file2.save_image_custom(&image, JpegConfig { quality: 40 })?;
 
-let file3 = Ogg::new("path/to/audio.ogg");          // `Symphonia` integration
+let file3 = Ogg::new("path/to/audio.opus");         // `Symphonia` integration
 let audio: DecodedStream<OggReader, DynamicDecoder> // DecodedStream gives you everything you need for use with `symphonia` and is served as source for `rodio`
     = file3.load_audio()?;                          // Saving is not support (yet). You can still use `file3.save(&data)` if you have compressed audio
 

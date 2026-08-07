@@ -1,9 +1,12 @@
 #[cfg(feature = "serde")]
+use std::fmt::Display;
+
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "serde")]
 /// Marker trait for errors that can wrap [std::io::Error] in a model context.
-pub trait ModelIoError: From<std::io::Error> {}
+pub trait ModelIoError: From<std::io::Error> + Display {}
 
 #[cfg(feature = "serde")]
 /// Trait for files that serialize/deserialize typed models.
