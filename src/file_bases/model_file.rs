@@ -1,14 +1,8 @@
-#[cfg(feature = "serde")]
-use std::error::Error;
-
-#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "serde")]
 /// Marker trait for errors that can wrap [std::io::Error] in a model context.
-pub trait ModelIoError: From<std::io::Error> + Error {}
+pub trait ModelIoError: From<std::io::Error> + std::error::Error {}
 
-#[cfg(feature = "serde")]
 /// Trait for files that serialize/deserialize typed models.
 pub trait ModelFile: crate::traits::FileTrait {
     type Error: ModelIoError;
@@ -43,7 +37,7 @@ pub trait ModelFile: crate::traits::FileTrait {
 }
 
 /// Async counterpart of [ModelFile].
-#[cfg(all(feature = "async", feature = "serde"))]
+#[cfg(all(feature = "async"))]
 pub trait AsyncModelFile: ModelFile + crate::traits::AsyncFileTrait {
     /// Async version of [ModelFile::save_model].
     async fn asave_model(&self, model: &impl Serialize) -> Result<(), Self::Error> {
@@ -57,7 +51,7 @@ pub trait AsyncModelFile: ModelFile + crate::traits::AsyncFileTrait {
     }
 }
 
-#[cfg(all(feature = "async", feature = "serde"))]
+#[cfg(all(feature = "async"))]
 impl<T: ModelFile + crate::traits::AsyncFileTrait> AsyncModelFile for T {}
 
 // #[macro_export]
