@@ -156,72 +156,72 @@ impl<F: FsElement> DirWith<F> {
 #[cfg(feature = "dirs")]
 impl<F: crate::traits::FileTrait> DirWith<F> {
     /// Creates a [DirWith] from the user's home directory.
-    pub fn home() -> Option<Self> {
+    pub fn home_dir() -> Option<Self> {
         dirs::home_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's config directory.
-    pub fn config() -> Option<Self> {
+    pub fn config_dir() -> Option<Self> {
         dirs::config_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's cache directory.
-    pub fn cache() -> Option<Self> {
+    pub fn cache_dir() -> Option<Self> {
         dirs::cache_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's data directory.
-    pub fn data() -> Option<Self> {
+    pub fn data_dir() -> Option<Self> {
         dirs::data_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's desktop directory.
-    pub fn desktop() -> Option<Self> {
+    pub fn desktop_dir() -> Option<Self> {
         dirs::desktop_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's documents directory.
-    pub fn document() -> Option<Self> {
-        dirs::document_dir().map(Self::new)
+    pub fn document_dir() -> Option<DirWith<crate::TextTypes>> {
+        dirs::document_dir().map(DirWith::new)
     }
 
     /// Creates a [DirWith] from the user's downloads directory.
-    pub fn download() -> Option<Self> {
+    pub fn download_dir() -> Option<Self> {
         dirs::download_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's pictures directory.
-    pub fn picture() -> Option<Self> {
-        dirs::picture_dir().map(Self::new)
+    pub fn picture_dir() -> Option<DirWith<crate::ImageTypes>> {
+        dirs::picture_dir().map(DirWith::new)
     }
 
     /// Creates a [DirWith] from the user's music directory.
-    pub fn audio() -> Option<Self> {
-        dirs::audio_dir().map(Self::new)
+    pub fn audio_dir() -> Option<DirWith<crate::AudioTypes>> {
+        dirs::audio_dir().map(DirWith::new)
     }
 
     /// Creates a [DirWith] from the user's video directory.
-    pub fn video() -> Option<Self> {
+    pub fn video_dir() -> Option<Self> {    // TODO: VideoTypes
         dirs::video_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's runtime directory.
-    pub fn runtime() -> Option<Self> {
+    pub fn runtime_dir() -> Option<Self> {
         dirs::runtime_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's fonts directory.
-    pub fn font() -> Option<Self> {
+    pub fn font_dir() -> Option<Self> {
         dirs::font_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's executable directory.
-    pub fn executable() -> Option<Self> {
+    pub fn executable_dir() -> Option<Self> {
         dirs::executable_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's preference directory.
-    pub fn preference() -> Option<Self> {
+    pub fn preference_dir() -> Option<Self> {
         dirs::preference_dir().map(Self::new)
     }
 }
