@@ -29,7 +29,7 @@ impl<F: FsElement> FsElement for DirWith<F> {
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     fn try_new(path: impl AsRef<Path>) -> Result<Self, Self::TryNewError> {
         Ok(Self {
-            dir: Dir::new(path),
+            dir: Dir::try_new(path)?,
             elements: vec![],
         })
     }
@@ -120,7 +120,7 @@ impl<F: FsElement> DirWith<F> {
     #[cfg(feature = "glob")]
     pub fn glob(&self, pattern: &str) -> Result<Vec<F>, glob::GlobError> {
         let mut res = vec![];
-        for p in glob::glob(pattern).unwrap() {
+        for p in glob::glob(&self.join(pattern).to_string_lossy()).unwrap() {
             res.push(F::new(p?))
         }
         Ok(res)
@@ -134,7 +134,7 @@ impl<F: FsElement> DirWith<F> {
     #[cfg(feature = "glob")]
     pub fn glob_with(&self, pattern: &str, options: glob::MatchOptions) -> Result<Vec<F>, glob::GlobError> {
         let mut res = vec![];
-        for p in glob::glob_with(pattern, options).unwrap() {
+        for p in glob::glob_with(&self.join(pattern).to_string_lossy(), options).unwrap() {
             res.push(F::new(p?))
         }
         Ok(res)
@@ -178,21 +178,24 @@ impl<F: FileTrait + 'static> DirWith<F> {
             
         let mut set = tokio::task::JoinSet::new();
 
-        for f in self {
+        for (i, f) in self.into_iter().enumerate() {
             let f = f.clone();
             set.spawn(async move {
-                f.aload().await
+                (i, f.aload().await)
             });
         }
 
         let mut results = Vec::new();
         while let Some(res) = set.join_next().await {
             // res? checks if the task panicked
-            // res?? checks if aload() returned an Err
-            results.push(res??);
+            // r? checks if aload() returned an Err
+            let (i, r) = res?;
+            results.push((i, r?));
         }
 
-        Ok(results)
+        // JoinSet completes in nondeterministic order — restore input order
+        results.sort_by_key(|(i, _)| *i);
+        Ok(results.into_iter().map(|(_, r)| r).collect())
     }
 }
 
@@ -255,7 +258,7 @@ impl<F: FsElement> From<String> for DirWith<F> {
 }
 
 impl<F: FsElement> std::ops::Deref for DirWith<F> {
-    type Target = Path;
+    type Target = Dir;
     fn deref(&self) -> &Self::Target {
         &self.dir
     }

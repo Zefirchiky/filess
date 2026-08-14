@@ -140,7 +140,7 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
 
     /// Returns [std::fs::File] for this file
     fn as_file(&self) -> std::io::Result<fs::File> {
-        fs::File::create(self)
+        fs::OpenOptions::new().read(true).write(true).open(self)
     }
 
     /// Saves data to the file.
@@ -181,8 +181,12 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     }
 
     /// Enforces file data to be of file type.
+    /// 
+    /// Panics if data is wrong.
     ///
     /// It's an io operation, use [aenforce](AsyncFileTrait::aenforce) if you don't want this operation to lag the program.
+    /// 
+    /// Use [is_correct_data](FileTrait::is_correct_data) to just check if data is correct.
     #[cfg(feature = "infer")]
     fn enforce(&self) -> std::io::Result<()> {
         assert!(

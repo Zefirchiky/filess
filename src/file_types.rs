@@ -95,6 +95,7 @@ impl FileTrait for ModelType {
         Self::from_ext(path).expect("Must be one of the model formats")
     }
 
+    /// This currently panics if there is no corresponding file (FIXME)
     fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
         let path = path.as_ref();
         Self::from_ext(path).ok_or_else(|| {
@@ -263,7 +264,7 @@ define_file_types!(
 #[cfg(feature = "image")]
 impl crate::traits::ImageFile for ImageTypes {
     fn image_format() -> image::ImageFormat {
-        image::ImageFormat::Avif
+        image::ImageFormat::Avif    // FIXME: Should somehow return based on current type
     }
 }
 

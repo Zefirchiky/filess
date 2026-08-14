@@ -1,5 +1,7 @@
 use std::{fmt::Debug, fs, path::{Path, PathBuf}};
 
+use crate::Temporary;
+
 /// Super-trait bundling the bounds required by [FsElement].
 #[cfg(not(feature = "serde"))]
 pub trait FsElementBoundaries: Default + Debug + Clone + AsRef<Path> + From<PathBuf> + From<&'static str> + Sync + Send {}
@@ -34,17 +36,17 @@ pub trait FsElement: FsElementBoundaries {
     /// 
     /// Does not consume this instance.
     /// New instance will be returned.
-    fn copy(&self, path: impl AsRef<Path>) -> std::io::Result<Self> {
-        fs::copy(self, &path)?;
-        Ok(Self::new(path))
+    fn copy(&self, dst: impl AsRef<Path>) -> std::io::Result<Self> {
+        fs::copy(self, &dst)?;
+        Ok(Self::new(dst))
     }
     
     /// Renames the file or dir in a file system
     /// 
     /// Corresponds to [fs::rename]
-    fn rename(&mut self, path: impl AsRef<Path>) -> std::io::Result<()> {
-        fs::rename(&self, &path)?;
-        self.rename_file(path);
+    fn rename(&mut self, dst: impl AsRef<Path>) -> std::io::Result<()> {
+        fs::rename(&self, &dst)?;
+        self.rename_file(dst);
         Ok(())
     }
     /// Changes underlying [PathBuf]
@@ -55,6 +57,13 @@ pub trait FsElement: FsElementBoundaries {
     #[cfg(feature = "trash")]
     fn trash(&self) -> Result<(), trash::Error> {
         trash::delete(self)
+    }
+
+    /// Transforms file into `Temporary`
+    /// 
+    /// File will be deleted at drop
+    fn as_temp(self) -> Temporary<Self> {
+        Temporary::new(self)
     }
 }
 
@@ -67,15 +76,15 @@ pub trait AsyncFsElement: FsElement {
     /// Removes file or dir from file system
     async fn aremove(&self) -> std::io::Result<()>;
     /// Copies file or dir in file system
-    async fn acopy(&self, path: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
-        tokio::fs::copy(self, &path).await?;
-        Ok(Self::new(path))
+    async fn acopy(&self, dst: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
+        tokio::fs::copy(self, &dst).await?;
+        Ok(Self::new(dst))
     }
     /// Renames the file or a dir in a file system
     /// Corresponds to [fs::rename]
-    async fn arename(&self, path: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
-        tokio::fs::rename(self, &path).await?;
-        Ok(Self::new(path))
+    async fn arename(&self, dst: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
+        tokio::fs::rename(self, &dst).await?;
+        Ok(Self::new(dst))
     }
 }
 

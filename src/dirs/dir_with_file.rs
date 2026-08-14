@@ -4,11 +4,17 @@ use crate::{DirWith, FileType, traits::{FileTrait, FsElement}};
 
 #[derive(Debug, thiserror::Error)]
 /// Errors that can occur when creating a [Dir].
-pub enum DirWithFileCreationError<F: FileTrait> {
+pub enum DirWithFileCreationError<F1: FsElement, F2: FileTrait> {
     #[error("Dir creation error: {0:?}")]
-    Dir(#[from] <crate::Dir as FsElement>::TryNewError),
+    Dir(#[from] <DirWith<F1> as FsElement>::TryNewError),
     #[error("File creation error: {0:?}")]
-    File(#[from] F::TryNewError),
+    File(F2::TryNewError),
+}
+
+impl<F1: FsElement, F2: FileTrait> From<crate::file_bases::file_base::FileCreationError<F2>> for DirWithFileCreationError<F1, F2> {
+    fn from(err: crate::file_bases::file_base::FileCreationError<F2>) -> Self {
+        Self::File(err)
+    }
 }
 
 /// Represents either dir containing `F1` or a file `F2`
@@ -64,7 +70,7 @@ impl<F1: FsElement, F2: FileTrait> Default for DirWithFile<F1, F2> {
 }
 
 impl<F1: FsElement, F2: FileTrait> FsElement for DirWithFile<F1, F2> {
-    type TryNewError = DirWithFileCreationError<F2>;
+    type TryNewError = DirWithFileCreationError<F1, F2>;
 
     fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
         if path.as_ref().extension().is_some() {

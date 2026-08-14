@@ -8,7 +8,13 @@ pub enum DirFileCreationError<F: FileTrait> {
     #[error("Dir creation error: {0:?}")]
     Dir(#[from] <crate::Dir as FsElement>::TryNewError),
     #[error("File creation error: {0:?}")]
-    File(#[from] F::TryNewError),
+    File(F::TryNewError),
+}
+
+impl<F: FileTrait> From<crate::file_bases::file_base::FileCreationError<F>> for DirFileCreationError<F> {
+    fn from(err: crate::file_bases::file_base::FileCreationError<F>) -> Self {
+        Self::File(err)
+    }
 }
 
 /// Represents either [Dir](crate::Dir) or `F`

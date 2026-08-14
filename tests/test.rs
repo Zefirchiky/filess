@@ -632,8 +632,8 @@ fn dir_glob() {
     std::fs::write(dir.join("one.json"), b"").unwrap();
     std::fs::write(dir.join("two.json"), b"").unwrap();
     let pattern = dir.join("*.json").to_string_lossy().to_string();
-    let results = d.glob(&pattern);
-    assert_eq!(results.len(), 2);
+    let files = d.glob(&pattern).unwrap();
+    assert_eq!(files.len(), 2);
 }
 
 // ── Infer feature ───────────────────────────────────────────────────
@@ -716,7 +716,7 @@ fn file_type_default() {
 #[cfg(feature = "json")]
 #[test]
 fn file_creation_error_display() {
-    use filess::primitives::FileCreationError;
+    use filess::errors::FileCreationError;
     let err = FileCreationError::<filess::Json>::WrongExtension(
         PathBuf::from("f.txt"),
         "txt".into(),
@@ -792,8 +792,8 @@ fn dir_glob_with() {
         require_literal_separator: false,
         require_literal_leading_dot: false,
     };
-    let results = d.glob_with(&pattern, opts);
-    assert_eq!(results.len(), 2);
+    let files = d.glob_with(&pattern, opts).unwrap();
+    assert_eq!(files.len(), 2);
 }
 
 // ── Dir::rename_file (no FS change) ─────────────────────────────────
@@ -961,7 +961,7 @@ fn audio_types_from_ext() {
 #[cfg(feature = "json")]
 #[test]
 fn file_creation_error_no_extension() {
-    use filess::primitives::FileCreationError;
+    use filess::errors::FileCreationError;
     let err = FileCreationError::<filess::Json>::NoExtension(PathBuf::from("no_ext"));
     let msg = err.to_string();
     assert!(msg.contains("no extension"));
@@ -972,7 +972,7 @@ fn file_creation_error_no_extension() {
 fn file_creation_error_invalid_utf8() {
     use std::ffi::OsString;
     use std::os::unix::ffi::OsStringExt;
-    use filess::primitives::FileCreationError;
+    use filess::errors::FileCreationError;
     let err = FileCreationError::<filess::Json>::InvalidUtf8(OsString::from_vec(b"\xff\xfe".to_vec()));
     let msg = err.to_string();
     assert!(msg.contains("UTF-8"));

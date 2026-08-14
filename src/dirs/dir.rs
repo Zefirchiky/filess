@@ -49,6 +49,29 @@ impl FsElement for Dir {
     fn rename_file(&mut self, name: impl AsRef<Path>) {
         self.path = name.as_ref().into();
     }
+
+    /// Copies everything in the directory into `dst`
+    /// 
+    /// Panics if `dst` is not a dir (look [Dir::new])
+    /// 
+    /// Does not check if copied files are one of [FileType]
+    fn copy(&self, dst: impl AsRef<Path>) -> io::Result<Self> {
+        let dst = Dir::new(dst);
+        dst.create()?;
+            
+        for entry in fs::read_dir(self)? {
+            let entry = entry?;
+            let ty = entry.file_type()?;
+            let dst_path = dst.as_ref().join(entry.file_name());
+    
+            if ty.is_dir() {
+                Dir::new(entry.path()).copy(dst_path)?;
+            } else {
+                fs::copy(entry.path(), dst_path)?;
+            }
+        }
+        Ok(dst)
+    }
 }
 
 #[cfg(feature = "async")]
@@ -64,6 +87,24 @@ impl crate::traits::AsyncFsElement for Dir {
     /// !!! INCLUDING THE CONTENT INSIDE !!!
     async fn aremove(&self) -> std::io::Result<()> {
         tokio::fs::remove_dir_all(self).await
+    }
+
+    /// Async version of [Dir::copy]
+    async fn acopy(&self, dst: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
+        let dst = Dir::new(dst);
+        dst.acreate().await?;
+
+        while let Some(entry) = tokio::fs::read_dir(self).await?.next_entry().await? {
+            let ty = entry.file_type().await?;
+            let dst_path = dst.as_ref().join(entry.file_name());
+    
+            if ty.is_dir() {
+                Dir::new(entry.path()).acopy(dst_path).await?;
+            } else {
+                tokio::fs::copy(entry.path(), dst_path).await?;
+            }
+        }
+        Ok(dst)
     }
 }
 
@@ -87,7 +128,7 @@ impl Dir {
     /// Walks through dir with [walkdir].
     ///
     /// ```ignore
-    /// let dir = Dir::<File>::new("path");
+    /// let dir = Dir::new("path");
     /// for entry in dir.walk() { ... }
     /// ```
     #[cfg(feature = "walk")]
@@ -109,7 +150,7 @@ impl Dir {
     #[cfg(feature = "glob")]
     pub fn glob(&self, pattern: &str) -> Result<Vec<FileType>, glob::GlobError> {
         let mut res = vec![];
-        for p in glob::glob(pattern).unwrap() {
+        for p in glob::glob(&self.join(pattern).to_string_lossy()).unwrap() {
             res.push(<FileType as FileTrait>::new(p?))
         }
         Ok(res)
@@ -123,7 +164,7 @@ impl Dir {
     #[cfg(feature = "glob")]
     pub fn glob_with(&self, pattern: &str, options: glob::MatchOptions) -> Result<Vec<FileType>, glob::GlobError> {
         let mut res = vec![];
-        for p in glob::glob_with(pattern, options).unwrap() {
+        for p in glob::glob_with(&self.join(pattern).to_string_lossy(), options).unwrap() {
             res.push(<FileType as FileTrait>::new(p?))
         }
         Ok(res)
@@ -153,20 +194,23 @@ impl Dir {
             
         let mut set = tokio::task::JoinSet::new();
 
-        for f in files {
+        for (i, f) in files.into_iter().enumerate() {
             set.spawn(async move {
-                f.aload().await
+                (i, f.aload().await)
             });
         }
 
         let mut results = Vec::new();
         while let Some(res) = set.join_next().await {
             // res? checks if the task panicked
-            // res?? checks if aload() returned an Err
-            results.push(res??);
+            // r? checks if aload() returned an Err
+            let (i, r) = res?;
+            results.push((i, r?));
         }
 
-        Ok(results)
+        // JoinSet completes in nondeterministic order — restore input order
+        results.sort_by_key(|(i, _)| *i);
+        Ok(results.into_iter().map(|(_, r)| r).collect())
     }
 }
 
