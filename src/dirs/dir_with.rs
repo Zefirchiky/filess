@@ -191,13 +191,25 @@ impl<F: crate::traits::FileTrait> DirWith<F> {
     }
 
     /// Creates a [DirWith] from the user's pictures directory.
+    #[cfg(feature = "image")]
     pub fn picture_dir() -> Option<DirWith<crate::ImageTypes>> {
         dirs::picture_dir().map(DirWith::new)
     }
+    /// Creates a [DirWith] from the user's pictures directory.
+    #[cfg(not(feature = "image"))]
+    pub fn picture_dir() -> Option<Self> {
+        dirs::picture_dir().map(Self::new)
+    }
 
     /// Creates a [DirWith] from the user's music directory.
+    #[cfg(feature = "audio")]
     pub fn audio_dir() -> Option<DirWith<crate::AudioTypes>> {
         dirs::audio_dir().map(DirWith::new)
+    }
+    /// Creates a [DirWith] from the user's music directory.
+    #[cfg(not(feature = "audio"))]
+    pub fn audio_dir() -> Option<Self> {
+        dirs::audio_dir().map(Self::new)
     }
 
     /// Creates a [DirWith] from the user's video directory.
