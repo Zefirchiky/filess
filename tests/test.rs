@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use filess::traits::FileTrait;
 #[cfg(feature = "serde")]
 use filess::traits::FsElement;
-use filess::{Dir, DirFile, FileType, Temporary};
+use filess::{DirWith, DirWithFile, FileType, Temporary};
 
 // ── Fixtures ────────────────────────────────────────────────────────
 fn temp_path(name: &str) -> PathBuf {
@@ -197,14 +197,14 @@ fn file_type_from_ext_txt() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_new() {
-    let d = Dir::<filess::Json>::new("/tmp");
+    let d = DirWith::<filess::Json>::new("/tmp");
     assert_eq!(d.as_ref(), Path::new("/tmp"));
 }
 
 #[cfg(feature = "json")]
 #[test]
 fn dir_try_new_non_existent() {
-    let d = Dir::<filess::Json>::try_new("/some/nonexistent/path").unwrap();
+    let d = DirWith::<filess::Json>::try_new("/some/nonexistent/path").unwrap();
     assert_eq!(d.as_ref(), Path::new("/some/nonexistent/path"));
 }
 
@@ -214,7 +214,7 @@ fn dir_try_new_file_fails() {
     let dir = scratch_dir();
     let f_path = dir.join("not_a_dir.txt");
     std::fs::write(&f_path, b"").unwrap();
-    let err = Dir::<filess::Json>::try_new(&f_path).unwrap_err();
+    let err = DirWith::<filess::Json>::try_new(&f_path).unwrap_err();
     assert!(err.to_string().contains("not a directory"));
 }
 
@@ -222,7 +222,7 @@ fn dir_try_new_file_fails() {
 #[test]
 fn dir_create_and_remove() {
     let dir = scratch_dir();
-    let d = Temporary::new(Dir::<filess::Json>::new(dir.join("mydir")));
+    let d = Temporary::new(DirWith::<filess::Json>::new(dir.join("mydir")));
     d.create().unwrap();
     assert!(d.as_ref().exists());
     d.remove().unwrap();
@@ -234,7 +234,7 @@ fn dir_create_and_remove() {
 fn dir_push_and_create_all() {
     let root = scratch_dir();
     let dir_path = root.join("project");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let a_path = dir_path.join("a.json");
     let b_path = dir_path.join("b.json");
     d.push(filess::Json::new(&a_path));
@@ -249,7 +249,7 @@ fn dir_push_and_create_all() {
 fn dir_load_files() {
     let root = scratch_dir();
     let dir_path = root.join("data");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     // Use absolute paths so elements can be found independently
     let x_path = dir_path.join("x.json");
     let y_path = dir_path.join("y.json");
@@ -265,7 +265,7 @@ fn dir_load_files() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_into_iter() {
-    let mut d = Dir::<filess::Json>::new("/tmp");
+    let mut d = DirWith::<filess::Json>::new("/tmp");
     d.push(filess::Json::new("a.json"));
     d.push(filess::Json::new("b.json"));
     let paths: Vec<_> = d.into_iter().map(|f| f.as_ref().to_owned()).collect();
@@ -398,7 +398,7 @@ fn dir_load_models() {
 
     let root = scratch_dir();
     let dir_path = root.join("points");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let p1_path = dir_path.join("a.json");
     let p2_path = dir_path.join("b.json");
     d.push(filess::Json::new(&p1_path));
@@ -482,7 +482,7 @@ mod async_tests {
     use filess::traits::AsyncFsElement;
     use filess::traits::FileTrait;
     use filess::traits::FsElement;
-    use filess::{Dir, Json};
+    use filess::{DirWith, Json};
 
     #[tokio::test]
     async fn async_save_load() {
@@ -537,7 +537,7 @@ mod async_tests {
     async fn async_dir_acreate_all() {
         let root = crate::scratch_dir();
         let dir_path = root.join("async_dir");
-        let mut d = Dir::<Json>::new(&dir_path);
+        let mut d = DirWith::<Json>::new(&dir_path);
         let a_path = dir_path.join("a.json");
         let b_path = dir_path.join("b.json");
         d.push(Json::new(&a_path));
@@ -553,7 +553,7 @@ mod async_tests {
     async fn async_dir_aload_files() {
         let root = crate::scratch_dir();
         let dir_path = root.join("async_load");
-        let mut d = Dir::<Json>::new(&dir_path);
+        let mut d = DirWith::<Json>::new(&dir_path);
         let a_path = dir_path.join("a.json");
         let b_path = dir_path.join("b.json");
         d.push(Json::new(&a_path));
@@ -571,7 +571,7 @@ mod async_tests {
 #[cfg(all(feature = "async", feature = "json", feature = "serde"))]
 mod async_model_tests {
     use filess::traits::{FsElement, ModelFile};
-    use filess::{Dir, Json};
+    use filess::{DirWith, Json};
 
     #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq)]
     struct Cfg { key: String }
@@ -580,7 +580,7 @@ mod async_model_tests {
     async fn async_dir_aload_models() {
         let root = crate::scratch_dir();
         let dir_path = root.join("async_models");
-        let mut d = Dir::<Json>::new(&dir_path);
+        let mut d = DirWith::<Json>::new(&dir_path);
         let a_path = dir_path.join("a.json");
         let b_path = dir_path.join("b.json");
         d.push(Json::new(&a_path));
@@ -612,7 +612,7 @@ fn trash_file() {
 fn dir_walk() {
     let root = scratch_dir();
     let dir_path = root.join("walk_test");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let a_path = dir_path.join("a.json");
     let b_path = dir_path.join("b.json");
     d.push(filess::Json::new(&a_path));
@@ -628,7 +628,7 @@ fn dir_walk() {
 #[test]
 fn dir_glob() {
     let dir = scratch_dir();
-    let d = Temporary::new(Dir::<filess::Json>::new(&dir));
+    let d = Temporary::new(DirWith::<filess::Json>::new(&dir));
     std::fs::write(dir.join("one.json"), b"").unwrap();
     std::fs::write(dir.join("two.json"), b"").unwrap();
     let pattern = dir.join("*.json").to_string_lossy().to_string();
@@ -692,17 +692,17 @@ fn file_type_from_path() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_div_str_creates_file_with_ext() {
-    let d = Dir::<filess::Json>::new("/base");
+    let d = DirWith::<filess::Json>::new("/base");
     let df = d / "notes.json";
-    assert!(matches!(df, DirFile::File(_)));
+    assert!(matches!(df, DirWithFile::File(_)));
 }
 
 #[cfg(feature = "just_json")]
 #[test]
 fn dir_div_str_creates_dir_without_ext() {
-    let d = Dir::<filess::Json>::new("/base");
+    let d = DirWith::<filess::Json>::new("/base");
     let df = d / "subdir";
-    assert!(matches!(df, DirFile::Dir(_)));
+    assert!(matches!(df, DirWithFile::Dir(_)));
 }
 
 // ── FileType default ────────────────────────────────────────────────
@@ -733,7 +733,7 @@ fn open_trait_is_implemented() {
     use filess::traits::OpenTrait;
     fn assert_open<T: OpenTrait>() {}
     assert_open::<filess::Json>();
-    assert_open::<Dir<filess::Json>>();
+    assert_open::<DirWith<filess::Json>>();
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -746,7 +746,7 @@ fn open_trait_is_implemented() {
 fn dir_save_files() {
     let root = scratch_dir();
     let dir_path = root.join("save_files");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let a_path = dir_path.join("a.json");
     let b_path = dir_path.join("b.json");
     d.push(filess::Json::new(&a_path));
@@ -763,7 +763,7 @@ fn dir_save_files() {
 fn dir_trash_files() {
     let root = scratch_dir();
     let dir_path = root.join("trash_dir");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let a_path = dir_path.join("a.json");
     let b_path = dir_path.join("b.json");
     d.push(filess::Json::new(&a_path));
@@ -782,7 +782,7 @@ fn dir_trash_files() {
 #[test]
 fn dir_glob_with() {
     let dir = scratch_dir();
-    let d = Temporary::new(Dir::<filess::Json>::new(&dir));
+    let d = Temporary::new(DirWith::<filess::Json>::new(&dir));
     std::fs::write(dir.join("one.json"), b"").unwrap();
     std::fs::write(dir.join("two.json"), b"").unwrap();
     let pattern = dir.join("*.json").to_string_lossy().to_string();
@@ -803,7 +803,7 @@ fn dir_rename_file_no_fs() {
     use std::path::Path;
     let dir = scratch_dir();
     let orig = dir.join("original_name");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&orig));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&orig));
     d.create().unwrap();
     assert!(orig.exists());
     d.rename_file("renamed_dir");
@@ -816,28 +816,28 @@ fn dir_rename_file_no_fs() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_from_path() {
-    let d = Dir::<filess::Json>::from(Path::new("/from/path"));
+    let d = DirWith::<filess::Json>::from(Path::new("/from/path"));
     assert_eq!(d.as_ref(), Path::new("/from/path"));
 }
 
 #[cfg(feature = "json")]
 #[test]
 fn dir_from_pathbuf() {
-    let d = Dir::<filess::Json>::from(PathBuf::from("/from/pathbuf"));
+    let d = DirWith::<filess::Json>::from(PathBuf::from("/from/pathbuf"));
     assert_eq!(d.as_ref(), Path::new("/from/pathbuf"));
 }
 
 #[cfg(feature = "json")]
 #[test]
 fn dir_from_str() {
-    let d = Dir::<filess::Json>::from("/from/str");
+    let d = DirWith::<filess::Json>::from("/from/str");
     assert_eq!(d.as_ref(), Path::new("/from/str"));
 }
 
 #[cfg(feature = "json")]
 #[test]
 fn dir_from_string() {
-    let d = Dir::<filess::Json>::from(String::from("/from/string"));
+    let d = DirWith::<filess::Json>::from(String::from("/from/string"));
     assert_eq!(d.as_ref(), Path::new("/from/string"));
 }
 
@@ -846,7 +846,7 @@ fn dir_from_string() {
 #[test]
 fn dir_deref_to_path() {
     use std::ops::Deref;
-    let d = Dir::<filess::Json>::new("/some/dir");
+    let d = DirWith::<filess::Json>::new("/some/dir");
     let p: &Path = d.deref();
     assert_eq!(p, Path::new("/some/dir"));
 }
@@ -855,7 +855,7 @@ fn dir_deref_to_path() {
 #[test]
 fn dir_deref_mut() {
     use std::ops::DerefMut;
-    let mut d = Dir::<filess::Json>::new("/original");
+    let mut d = DirWith::<filess::Json>::new("/original");
     let p: &mut Path = d.deref_mut();
     assert_eq!(p, Path::new("/original"));
 }
@@ -864,8 +864,8 @@ fn dir_deref_mut() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_div_dir() {
-    let a = Dir::<filess::Json>::new("/base");
-    let b = Dir::<filess::Json>::new("sub");
+    let a = DirWith::<filess::Json>::new("/base");
+    let b = DirWith::<filess::Json>::new("sub");
     let c = a / b;
     let expected = if cfg!(windows) { r"\base\sub" } else { "/base/sub" };
     assert_eq!(c.as_ref(), Path::new(expected));
@@ -875,7 +875,7 @@ fn dir_div_dir() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_into_iter_ref() {
-    let mut d = Dir::<filess::Json>::new("/tmp");
+    let mut d = DirWith::<filess::Json>::new("/tmp");
     d.push(filess::Json::new("a.json"));
     d.push(filess::Json::new("b.json"));
     let paths: Vec<_> = (&d).into_iter().map(|f| f.as_ref().to_owned()).collect();
@@ -885,7 +885,7 @@ fn dir_into_iter_ref() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_into_iter_mut() {
-    let mut d = Dir::<filess::Json>::new("/tmp");
+    let mut d = DirWith::<filess::Json>::new("/tmp");
     d.push(filess::Json::new("a.json"));
     d.push(filess::Json::new("b.json"));
     let names: Vec<_> = (&mut d).into_iter().map(|f| f.as_ref().to_owned()).collect();
@@ -1039,13 +1039,13 @@ fn file_base_from_string() {
 #[cfg(feature = "json")]
 #[test]
 fn dir_file_constructable() {
-    let _ = filess::DirFile::<filess::FileType, filess::FileType>::Dir(
-        filess::Dir::new("/tmp"),
+    let _ = filess::DirWithFile::<filess::FileType, filess::FileType>::Dir(
+        filess::DirWith::new("/tmp"),
     );
-    let f = filess::DirFile::<filess::FileType, filess::FileType>::File(
+    let f = filess::DirWithFile::<filess::FileType, filess::FileType>::File(
         <filess::FileType as FileTrait>::new("/tmp/f.json"),
     );
-    assert!(matches!(f, filess::DirFile::File(_)));
+    assert!(matches!(f, filess::DirWithFile::File(_)));
 }
 
 // ── New Dir::self_bytes_to_models test ─────────────────────────────
@@ -1059,7 +1059,7 @@ fn dir_self_bytes_to_models() {
 
     let root = scratch_dir();
     let dir_path = root.join("self_bytes");
-    let mut d = Temporary::new(Dir::<filess::Json>::new(&dir_path));
+    let mut d = Temporary::new(DirWith::<filess::Json>::new(&dir_path));
     let a = dir_path.join("a.json");
     let b = dir_path.join("b.json");
     d.push(filess::Json::new(&a));

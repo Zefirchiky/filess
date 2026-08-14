@@ -60,8 +60,7 @@
 //! ```
 #![deny(unreachable_pub)]
 #![allow(refining_impl_trait, async_fn_in_trait)]
-mod dir;
-mod dir_file;
+mod dirs;
 pub mod errors;
 mod file_bases;
 pub mod file_types;
@@ -73,8 +72,7 @@ pub mod primitives;
 mod temporary;
 pub mod traits;
 
-pub use dir::{Dir, DirAny};
-pub use dir_file::{DirFile, DirFileAny};
+pub use dirs::*;
 #[cfg(feature = "audio")]
 pub use file_bases::audio_file::DecodedStream;
 pub use file_types::*;

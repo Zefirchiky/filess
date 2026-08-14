@@ -116,7 +116,7 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
 
 /// Core trait for typed file wrappers.
 ///
-/// Provides file I/O, path validation, extension checks, and optional [infer](infer).
+/// Provides file I/O, path validation, extension checks, and optional [infer].
 pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     fn new(path: impl AsRef<Path>) -> Self {
         <Self as FileTrait>::try_new(path).unwrap()

@@ -1,55 +1,76 @@
+use std::path::PathBuf;
+
 use crate::{Dir, FileType, traits::{FileTrait, FsElement}};
 
-/// Represents either file `F1` or a dir containing `F2`
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+/// Errors that can occur when creating a [Dir].
+pub enum DirFileCreationError<F: FileTrait> {
+    #[error("Dir creation error: {0:?}")]
+    Dir(#[from] <crate::Dir as FsElement>::TryNewError),
+    #[error("File creation error: {0:?}")]
+    File(#[from] F::TryNewError),
+}
+
+/// Represents either [Dir](crate::Dir) or `F`
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "serde", serde(bound = "F1: serde::Serialize + serde::de::DeserializeOwned, F2: serde::Serialize + serde::de::DeserializeOwned"))]
-pub enum DirFile<F1: FsElement, F2: FileTrait> {
-    Dir(Dir<F1>),
-    File(F2),
+#[cfg_attr(feature = "serde", serde(bound = "F: serde::Serialize + serde::de::DeserializeOwned"))]
+pub enum DirFile<F: FileTrait> {
+    Dir(Dir),
+    File(F),
 }
 
-impl<F1: FsElement, F2: FileTrait> Clone for DirFile<F1, F2> {
-    fn clone(&self) -> Self {
-        match self {
-            Self::Dir(d) => Self::Dir(d.clone()),
-            Self::File(f) => Self::File(f.clone()),
-        }
-    }
-}
+/// Recursive type alias, represent [DirFile]  any *available* file
+pub type DirFileAny = DirFile<FileType>;
 
-impl<F1: FsElement, F2: FileTrait> AsRef<std::path::Path> for DirFile<F1, F2> {
+impl<F: FileTrait> AsRef<std::path::Path> for DirFile<F> {
     fn as_ref(&self) -> &std::path::Path {
         match self {
-            Self::Dir(d) => d.as_ref(),
-            Self::File(f) => f.as_ref(),
+            DirFile::Dir(d) => d.as_ref(),
+            DirFile::File(f) => f.as_ref(),
         }
     }
 }
 
-impl<F1: FsElement, F2: FileTrait> From<std::path::PathBuf> for DirFile<F1, F2> {
-    fn from(path: std::path::PathBuf) -> Self {
-        Self::File(<F2 as FsElement>::new(path))
+impl<F: FileTrait> From<&std::path::Path> for DirFile<F> {
+    fn from(path: &std::path::Path) -> Self {
+        Self::new(path)
     }
 }
 
-impl<F1: FsElement, F2: FileTrait> From<&'static str> for DirFile<F1, F2> {
+impl<F: FileTrait> From<PathBuf> for DirFile<F> {
+    fn from(path: PathBuf) -> Self {
+        Self::new(path)
+    }
+}
+
+impl<F: FileTrait> From<String> for DirFile<F> {
+    fn from(path: String) -> Self {
+        Self::new(path)
+    }
+}
+
+impl<F: FileTrait> From<&'static str> for DirFile<F> {
     fn from(path: &'static str) -> Self {
-        Self::File(<F2 as FsElement>::new(path))
+        Self::new(path)
     }
 }
 
-impl<F1: FsElement, F2: FileTrait> Default for DirFile<F1, F2> {
+impl<F: FileTrait> Default for DirFile<F> {
     fn default() -> Self {
-        Self::File(F2::default())
+        Self::File(F::default())
     }
 }
 
-impl<F1: FsElement, F2: FileTrait> FsElement for DirFile<F1, F2> {
-    type TryNewError = F2::TryNewError;
+impl<F: FileTrait> FsElement for DirFile<F> {
+    type TryNewError = DirFileCreationError<F>;
 
     fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
-        Ok(Self::File(<F2 as FsElement>::try_new(path)?))
+        if path.as_ref().extension().is_some() {
+            Ok(Self::File(<F as FileTrait>::try_new(path)?))
+        } else {
+            Ok(Self::Dir(Dir::try_new(path)?))
+        }
     }
 
     fn create(&self) -> std::io::Result<()> {
@@ -83,7 +104,7 @@ impl<F1: FsElement, F2: FileTrait> FsElement for DirFile<F1, F2> {
 
 #[cfg(feature = "async")]
 #[async_trait::async_trait]
-impl<F1: FsElement, F2: FileTrait> crate::traits::AsyncFsElement for DirFile<F1, F2> {
+impl<F: FileTrait> crate::traits::AsyncFsElement for DirFile<F> {
     async fn acreate(&self) -> std::io::Result<()> {
         match self {
             Self::Dir(d) => d.acreate().await,
@@ -109,7 +130,3 @@ impl<F1: FsElement, F2: FileTrait> crate::traits::AsyncFsElement for DirFile<F1,
         }
     }
 }
-
-/// Recursive type alias allowing [Dir](crate::Dir) to nest files and sub-dirs arbitrarily.
-pub type DirFileAny =
-    DirFile<DirFile<DirFile<DirFile<FileType, FileType>, FileType>, FileType>, FileType>;
