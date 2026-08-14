@@ -117,7 +117,7 @@ impl Dir {
     pub fn new(path: impl AsRef<Path>) -> Self {
         <Dir as FsElement>::new(path)
     }
-    
+      
     /// Creates a new [Dir] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
@@ -136,10 +136,12 @@ impl Dir {
         walkdir::WalkDir::new(self)
     }
 
-    /// Moves folder in trash
+    /// Moves files in dir to trash
+    /// 
+    /// FIXME: Just trashed the dir currently
     #[cfg(feature = "trash")]
     pub fn trash_files(&self) -> Result<(), trash::Error> {
-        trash::delete_all(self.iter())
+        trash::delete(self)
     }
 
     /// Uses glob pattern to find files, and converts them into [FileType](FileType)
@@ -179,6 +181,12 @@ impl Dir {
 
     /// Saves data (one chunk per file) to every file in this directory.
     pub fn save_files<F: FileTrait>(&self, files: &[F], data: Vec<Vec<u8>>) -> io::Result<()> {
+        if files.len() != data.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "files and data must have the same length",
+            ));
+        }
         for (f, d) in files.iter().zip(data) {
             f.save(d)?;
         }
@@ -222,6 +230,12 @@ impl Dir {
         files: &[F],
         data: Vec<Vec<u8>>,
     ) -> Result<Vec<T>, F::Error> {
+        if files.len() != data.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "files and data must have the same length",
+            ).into());
+        }
         files
             .iter()
             .zip(data)

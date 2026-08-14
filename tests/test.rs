@@ -924,15 +924,13 @@ fn file_enforce_passes_for_correct_data() {
     }
 }
 
-// ── File::ext() edge case (ext = [""]) ──────────────────────────────
+// ── File::ext() fallback (ext = []) ─────────────────────────────────
 #[test]
 fn file_type_has_empty_ext_slice() {
-    // File::ext() returns &[""] — the slice is non-empty but extension string is empty
-    assert_eq!(filess::File::ext(), &[""]);
-    // File can never be constructed for a real path (always panics)
-    // because no path has extension == "" and None triggers NoExtension
-    let err = filess::File::try_new("something.txt").unwrap_err();
-    assert!(err.to_string().contains("txt"));
+    // File/Image are fallback types accepting any path — no extension validation
+    assert_eq!(filess::File::ext(), &[] as &[&str]);
+    // File accepts any real path instead of panicking
+    assert!(filess::File::try_new("something.txt").is_ok());
 }
 
 // ── TextTypes / ImageTypes / AudioTypes from_ext ───────────────────

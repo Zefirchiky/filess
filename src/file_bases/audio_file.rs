@@ -25,6 +25,8 @@ pub struct DecodedStream<A: AudioFile, D: Decoder> {
     pub track_id: u32,
     // Keep a reusable sample buffer to avoid re-allocating every frame
     sample_buf: Option<SampleBuffer<f32>>,
+    // Spec the buffer was created with — recreate on format change
+    sample_spec: Option<symphonia::core::audio::SignalSpec>,
     sample_cursor: usize,
 }
 
@@ -35,26 +37,40 @@ impl<A: AudioFile, D: Decoder> DecodedStream<A, D> {
             decoder,
             track_id,
             sample_buf: None,
+            sample_spec: None,
             sample_cursor: 0,
+        }
+    }
+
+    /// Reads and decodes the next packet into `self.sample_buf`, returning the samples.
+    ///
+    /// Skips packets of other tracks, recreates the buffer if the format changed.
+    fn decode_next(&mut self) -> Option<&[f32]> {
+        loop {
+            let packet = self.reader.next_packet().ok()?;
+            if packet.track_id() != self.track_id {
+                continue;
+            }
+
+            let decoded = self.decoder.decode(&packet).ok()?;
+            let spec = *decoded.spec();
+
+            if self.sample_spec != Some(spec) {
+                self.sample_buf = Some(SampleBuffer::new(decoded.capacity() as u64, spec));
+                self.sample_spec = Some(spec);
+            }
+
+            let buf = self.sample_buf.as_mut()?;
+            buf.copy_interleaved_ref(decoded); // Normalize
+            self.sample_cursor = 0;
+
+            return Some(buf.samples());
         }
     }
 
     /// Returns the next decoded frame as f32 samples, or [None] at the end.
     pub fn next_frame(&mut self) -> Option<&[f32]> {
-        let packet = self.reader.next_packet().ok()?;
-        let decoded = self.decoder.decode(&packet).ok()?;
-
-        // If this is the first frame, or format changed, initialize the SampleBuffer
-        if self.sample_buf.is_none() {
-            self.sample_buf = Some(SampleBuffer::new(
-                decoded.capacity() as u64,
-                *decoded.spec(),
-            ));
-        }
-
-        let buf = self.sample_buf.as_mut()?;
-        buf.copy_interleaved_ref(decoded); // Normalize
-        Some(buf.samples())
+        self.decode_next()
     }
 
     /// Jump to a specific second in the audio
@@ -70,6 +86,7 @@ impl<A: AudioFile, D: Decoder> DecodedStream<A, D> {
             .map_err(|e| e.to_string())?;
 
         self.decoder.reset();
+        self.sample_cursor = 0;
         Ok(())
     }
 
@@ -96,29 +113,7 @@ where
                 return Some(sample);
             }
 
-            match self.reader.next_packet() {
-                Ok(packet) => {
-                    if packet.track_id() != self.track_id {
-                        continue;
-                    }
-
-                    match self.decoder.decode(&packet) {
-                        Ok(decoded) => {
-                            let spec = *decoded.spec();
-                            let mut next_buf = symphonia::core::audio::SampleBuffer::<f32>::new(
-                                decoded.capacity() as u64,
-                                spec,
-                            );
-                            next_buf.copy_interleaved_ref(decoded);
-
-                            self.sample_buf = Some(next_buf);
-                            self.sample_cursor = 0;
-                        }
-                        Err(_) => return None,
-                    }
-                }
-                Err(_) => return None,
-            }
+            self.decode_next()?;
         }
     }
 }
@@ -252,6 +247,6 @@ impl<A: AudioFile, D: Decoder> rodio::Source for DecodedStream<A, D> {
         self.decoder
             .codec_params()
             .n_frames
-            .map(|f| std::time::Duration::from_secs((f as u32 / self.sample_rate()) as u64))
+            .map(|f| std::time::Duration::from_secs_f64(f as f64 / f64::from(self.sample_rate().get())))
     }
 }

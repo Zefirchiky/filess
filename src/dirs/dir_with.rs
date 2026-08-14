@@ -49,6 +49,13 @@ impl<F: FsElement> FsElement for DirWith<F> {
     fn rename_file(&mut self, name: impl AsRef<Path>) {
         self.dir = name.as_ref().into();
     }
+
+    /// Recursively copies this directory and its elements to the new path.
+    fn copy(&self, dst: impl AsRef<Path>) -> std::io::Result<Self> {
+        // Copy the directory contents via Dir::copy
+        self.dir.copy(&dst)?;
+        Ok(Self::new(dst))
+    }
 }
 
 #[cfg(feature = "async")]
@@ -65,10 +72,15 @@ impl<F: FsElement> crate::traits::AsyncFsElement for DirWith<F> {
     async fn aremove(&self) -> std::io::Result<()> {
         tokio::fs::remove_dir_all(self).await
     }
+
+    async fn acopy(&self, dst: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
+        self.dir.acopy(&dst).await?;
+        Ok(Self::new(dst))
+    }
 }
 
 impl<F: FsElement> DirWith<F> {
-    /// Creates a new [Dir] instance from a given path.
+    /// Creates a new [DirWith] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     /// 
@@ -76,8 +88,8 @@ impl<F: FsElement> DirWith<F> {
     pub fn new(path: impl AsRef<Path>) -> Self {
         <DirWith<F> as FsElement>::new(path)
     }
-    
-    /// Creates a new [Dir] instance from a given path.
+      
+    /// Creates a new [DirWith] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
     pub fn try_new(path: impl AsRef<Path>) -> Result<Self, <DirWith<F> as FsElement>::TryNewError> {
@@ -109,7 +121,7 @@ impl<F: FsElement> DirWith<F> {
     /// Moves folder in trash
     #[cfg(feature = "trash")]
     pub fn trash_files(&self) -> Result<(), trash::Error> {
-        trash::delete_all(self.iter())
+        trash::delete(self)
     }
 
     /// Uses glob pattern to find files, and converts them into `F`
@@ -149,6 +161,12 @@ impl<F: crate::traits::FileTrait> DirWith<F> {
 
     /// Saves data (one chunk per file) to every file in this directory.
     pub fn save_files(&self, data: Vec<Vec<u8>>) -> io::Result<()> {
+        if self.elements.len() != data.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "elements and data must have the same length",
+            ));
+        }
         for (f, d) in self.elements.iter().zip(data) {
             f.save(d)?;
         }
@@ -206,6 +224,12 @@ impl<F: crate::traits::ModelFile > DirWith<F> {
         &self,
         data: Vec<Vec<u8>>,
     ) -> Result<Vec<T>, F::Error> {
+        if self.elements.len() != data.len() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "elements and data must have the same length",
+            ).into());
+        }
         self.elements
             .iter()
             .zip(data)

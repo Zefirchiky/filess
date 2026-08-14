@@ -181,8 +181,6 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     }
 
     /// Enforces file data to be of file type.
-    /// 
-    /// Panics if data is wrong.
     ///
     /// It's an io operation, use [aenforce](AsyncFileTrait::aenforce) if you don't want this operation to lag the program.
     /// 

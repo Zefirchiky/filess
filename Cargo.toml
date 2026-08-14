@@ -16,6 +16,7 @@ categories = ["filesystem"]
 
 [dependencies]
 async-trait = "0.1.91"
+dirs = { version = "6.0.0", optional = true }
 glob = { version = "0.3.4", optional = true }
 image = { version = "0.25.10", optional = true, default-features = false }
 infer = { version = "0.19.0", optional = true }
@@ -41,7 +42,7 @@ tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
 default = ["all-files", "image", "async", "symphonia-simd", "rodio", "base"]
 # default = ["serde", "image", "async", "rayon", "symphonia-simd", "rodio"]
 
-base = ["rayon", "open", "walk", "infer", "trash", "glob"]   # Small, mostly QOL crates
+base = ["rayon", "open", "walk", "infer", "trash", "glob", "dirs"]   # Small, mostly QOL crates
 
 all-files = ["all-text", "all-images", "all-audio"]
 all-text = ["all-models", "md", "txt"]
@@ -114,5 +115,6 @@ infer = ["dep:infer"]
 trash = ["dep:trash"]
 walk = ["dep:walkdir"]
 glob = ["dep:glob"]
+dirs = ["dep:dirs"]
 
 __full_test = []

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{Dir, FileType, traits::{FileTrait, FsElement}};
 
 #[derive(Debug, thiserror::Error)]
-/// Errors that can occur when creating a [Dir].
+/// Errors that can occur when creating a [DirFile].
 pub enum DirFileCreationError<F: FileTrait> {
     #[error("Dir creation error: {0:?}")]
     Dir(#[from] <crate::Dir as FsElement>::TryNewError),
