@@ -88,7 +88,7 @@ impl<F: FsElement> DirWith<F> {
     pub fn new(path: impl AsRef<Path>) -> Self {
         <DirWith<F> as FsElement>::new(path)
     }
-      
+       
     /// Creates a new [DirWith] instance from a given path.
     ///
     /// If the path already exists, it must be a directory. If it does not exist, it will be created recursively.
@@ -153,6 +153,79 @@ impl<F: FsElement> DirWith<F> {
     }
 }
 
+#[cfg(feature = "dirs")]
+impl<F: crate::traits::FileTrait> DirWith<F> {
+    /// Creates a [DirWith] from the user's home directory.
+    pub fn home() -> Option<Self> {
+        dirs::home_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's config directory.
+    pub fn config() -> Option<Self> {
+        dirs::config_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's cache directory.
+    pub fn cache() -> Option<Self> {
+        dirs::cache_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's data directory.
+    pub fn data() -> Option<Self> {
+        dirs::data_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's desktop directory.
+    pub fn desktop() -> Option<Self> {
+        dirs::desktop_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's documents directory.
+    pub fn document() -> Option<Self> {
+        dirs::document_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's downloads directory.
+    pub fn download() -> Option<Self> {
+        dirs::download_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's pictures directory.
+    pub fn picture() -> Option<Self> {
+        dirs::picture_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's music directory.
+    pub fn audio() -> Option<Self> {
+        dirs::audio_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's video directory.
+    pub fn video() -> Option<Self> {
+        dirs::video_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's runtime directory.
+    pub fn runtime() -> Option<Self> {
+        dirs::runtime_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's fonts directory.
+    pub fn font() -> Option<Self> {
+        dirs::font_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's executable directory.
+    pub fn executable() -> Option<Self> {
+        dirs::executable_dir().map(Self::new)
+    }
+
+    /// Creates a [DirWith] from the user's preference directory.
+    pub fn preference() -> Option<Self> {
+        dirs::preference_dir().map(Self::new)
+    }
+}
+
 impl<F: crate::traits::FileTrait> DirWith<F> {
     /// Loads content of every file in this directory.
     pub fn load_files(&self) -> io::Result<Vec<Vec<u8>>> {
@@ -176,7 +249,7 @@ impl<F: crate::traits::FileTrait> DirWith<F> {
 
 #[cfg(feature = "async")]
 impl<F: crate::traits::AsyncFsElement> DirWith<F> {
-    /// Async version of [Dir::create_all].
+    /// Async version of [DirWith::create_all].
     pub async fn acreate_all(&self) -> io::Result<()> {
         use crate::traits::AsyncFsElement;
 

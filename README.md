@@ -30,6 +30,10 @@ let some_image = ImageType::new("path/to/image.webp"); // `File`, `Text`, `Model
 let img = some_image.load_image()?;
 some_image.save_image(&img)?;
 
+// `Dirs` integration: access user directories
+let config_dir = Dir::config().unwrap();           // User's config directory
+let cache_dir = DirWith::<Json>::cache().unwrap(); // User's cache directory with Json files
+
 // Each function have their async variants (prefixed with `a`) if `async` feature is on
 let image2 = file2.aload_image().await?;
 Jpeg::new("another/path/image.jpeg").asave_image(&image2).await?;
@@ -61,11 +65,12 @@ fn needs_model(file: filess::ModelType);
 | `rayon`      | (Default) Turns on all of `rayon` features in crates that support it
 | `open`       | (Default) `open` integration. Open files or directories in default or arbitrary programs (`open()`, `open_with()`, etc.)
 | `walk`       | (Default) `walkdir` integration. Walk through directory (`walk()`)
-| `glob`       | (Default) `glob` integration. Use glob pattern to find files in `Dir`. Also concerts paths into `F` (`Dir<F>::glob()`, `Dir<F>::glob_with()`)
-| `infer`      | (Default) `infer` integration. Enforces that file data is of propper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
+| `glob`       | (Default) `glob` integration. Use glob pattern to find files in `Dir`. Also converts paths into `F` (`DirWith<F>::glob()`, `DirWith<F>::glob_with()`)
+| `infer`      | (Default) `infer` integration. Enforces that file data is of proper format, especially useful for images, audio, etc. (`enforce()`, `aenforce()`)
 | `trash`      | (Default) `trash` integration. Move files/dirs to trash, aka trash them (`trash()`)
+| `dirs`       | (Default) `dirs` integration. Access user directories like home, config, cache, etc. (`Dir::home()`, `Dir::config()`, `DirWith::cache()`, etc.) |
 
-Also exposes `open`, `walk`, `glob`, `infer` and `trash`.
+Also exposes `open`, `walk`, `glob`, `infer`, `trash` and `dirs`.
 
 All files have their separate features. It is recommended to turn off default features and add only formats you use, if you wish to publish.
 

@@ -28,12 +28,17 @@
 //! | **Walk** | `walk` | [Dir] — `walk` directories |
 //! | **Glob** | `glob` | [Dir] — `glob`, `glob_with` |
 //! | **Trash** | `trash` | [FsElement](traits::FsElement) — `trash` files/dirs |
+//! | **Dirs** | `dirs` | [Dir] and [DirWith] — user directory access (`home()`, `config()`, `cache()`, etc.) |
 //!
 //! # Types
 //!
 //! [Temporary]\<F\> — auto-cleaning wrapper that deletes the file (and empty parent dirs) on drop.
 //!
-//! [Dir]\<F\> — directory containing multiple files. Supports load/save all, glob, walk, async.
+//! [Dir] — directory type. Supports load/save all, glob, walk, async. With `dirs` feature, provides
+//! access to user directories via methods like `home()`, `config()`, `cache()`, etc.
+//!
+//! [DirWith]\<F\> — directory with a collection of files of type `F`. Supports bulk operations.
+//! With `dirs` feature, provides access to user directories via methods like `home()`, `config()`, etc.
 //!
 //! [FileType], [ModelType], [TextTypes], [ImageTypes], [AudioTypes] — enums over all types in each
 //! category for runtime dispatch without boxing.
@@ -54,6 +59,10 @@
 //!
 //! let audio = Flac::new("track.flac").load_audio()?; // symphonia
 //! let stream: DecodedStream = audio;
+//!
+//! // Dirs integration: access user directories
+//! let config_dir = Dir::config().unwrap();
+//! let cache_dir = DirWith::<Json>::cache().unwrap();
 //!
 //! // Each fn has async variants (prefixed with `a`):
 //! Jpeg::new("img.jpg").asave_image(&image).await?;
