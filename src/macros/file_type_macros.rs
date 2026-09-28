@@ -64,6 +64,10 @@ macro_rules! define_file_types {
         }
 
         impl FileTrait for $name {
+            const EXT: &[&str] = &[];
+            const EXT_NAME: &str = "";
+            const MIME: &[&str] = &[];
+            
             fn try_new(file: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
                 Ok(Self::from_ext(file))
             }
@@ -71,18 +75,6 @@ macro_rules! define_file_types {
             fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
                 let path: &std::path::Path = path.as_ref().into();
                 $crate::match_self_1_arg!(self, _rename_file, path, $fallback, $($feature $variant,)*);
-            }
-
-            fn ext() -> &'static [&'static str] {
-                &[]
-            }
-
-            fn ext_name() -> &'static str {
-                ""
-            }
-
-            fn mime_type() -> &'static [&'static str] {
-                &[]
             }
         }
 
@@ -145,7 +137,7 @@ macro_rules! define_file_types {
                     $(
                         #[cfg(feature = $feature)]
                         {
-                            if $crate::$variant::ext().contains(&ext) {
+                            if $crate::$variant::EXT.contains(&ext) {
                                 return Self::$variant($crate::$variant::new(&path_ref));
                             }
                         }

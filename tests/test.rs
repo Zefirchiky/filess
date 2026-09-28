@@ -138,23 +138,23 @@ fn change_path_updates_inner() {
 #[cfg(feature = "json")]
 #[test]
 fn json_metadata() {
-    assert!(filess::Json::ext().contains(&"json"));
-    assert_eq!(filess::Json::ext_name(), "json");
-    assert!(filess::Json::mime_type().contains(&"application/json"));
+    assert!(filess::Json::EXT.contains(&"json"));
+    assert_eq!(filess::Json::EXT_NAME, "json");
+    assert!(filess::Json::MIME.contains(&"application/json"));
 }
 
 #[cfg(feature = "txt")]
 #[test]
 fn txt_metadata() {
-    assert!(filess::Txt::ext().contains(&"txt"));
-    assert_eq!(filess::Txt::ext_name(), "txt");
+    assert!(filess::Txt::EXT.contains(&"txt"));
+    assert_eq!(filess::Txt::EXT_NAME, "txt");
 }
 
 #[cfg(feature = "md")]
 #[test]
 fn md_metadata() {
-    assert!(filess::Md::ext().contains(&"md"));
-    assert_eq!(filess::Md::ext_name(), "md");
+    assert!(filess::Md::EXT.contains(&"md"));
+    assert_eq!(filess::Md::EXT_NAME, "md");
 }
 
 // ── FileType ────────────────────────────────────────────────────────
@@ -440,19 +440,19 @@ fn fs_element_trait_works() {
 #[test]
 fn image_type_has_format() {
     use filess::traits::ImageFile;
-    let _fmt = <filess::Image as ImageFile>::image_format();
+    let _fmt = <filess::Image as ImageFile>::FORMAT;
 }
 
 #[cfg(all(feature = "image", feature = "png"))]
 #[test]
 fn png_metadata() {
-    assert!(filess::Png::ext().contains(&"png"));
+    assert!(filess::Png::EXT.contains(&"png"));
 }
 
 #[cfg(all(feature = "image", feature = "jpeg"))]
 #[test]
 fn jpeg_metadata() {
-    let exts = filess::Jpeg::ext();
+    let exts = filess::Jpeg::EXT;
     assert!(exts.contains(&"jpg") || exts.contains(&"jpeg"));
 }
 
@@ -460,19 +460,19 @@ fn jpeg_metadata() {
 #[cfg(feature = "mp3")]
 #[test]
 fn mp3_metadata() {
-    assert!(filess::Mp3::ext().contains(&"mp3"));
+    assert!(filess::Mp3::EXT.contains(&"mp3"));
 }
 
 #[cfg(feature = "flac")]
 #[test]
 fn flac_metadata() {
-    assert!(filess::Flac::ext().contains(&"flac"));
+    assert!(filess::Flac::EXT.contains(&"flac"));
 }
 
 #[cfg(feature = "wav")]
 #[test]
 fn wav_metadata() {
-    assert!(filess::Wav::ext().contains(&"wav"));
+    assert!(filess::Wav::EXT.contains(&"wav"));
 }
 
 // ── Async ───────────────────────────────────────────────────────────
@@ -924,11 +924,11 @@ fn file_enforce_passes_for_correct_data() {
     }
 }
 
-// ── File::ext() fallback (ext = []) ─────────────────────────────────
+// ── File::EXT fallback (ext = []) ─────────────────────────────────
 #[test]
 fn file_type_has_empty_ext_slice() {
     // File/Image are fallback types accepting any path — no extension validation
-    assert_eq!(filess::File::ext(), &[] as &[&str]);
+    assert_eq!(filess::File::EXT, &[] as &[&str]);
     // File accepts any real path instead of panicking
     assert!(filess::File::try_new("something.txt").is_ok());
 }
@@ -1090,8 +1090,8 @@ fn model_type_from_ext_unknown_returns_none() {
 fn model_type_file_trait_json() {
     use filess::traits::FileTrait;
     let _mt = filess::ModelType::from_ext("cfg.json").unwrap();
-    assert_eq!(filess::ModelType::ext(), &[] as &[&str]);
-    assert_eq!(filess::ModelType::ext_name(), "");
+    assert_eq!(filess::ModelType::EXT, &[] as &[&str]);
+    assert_eq!(filess::ModelType::EXT_NAME, "");
 }
 
 // ── Sync counterpart links documented ──────────────────────────────

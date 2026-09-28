@@ -25,6 +25,6 @@ mod aiff_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Aiff::codec_type(), CODEC_TYPE_PCM_S16BE);
+        assert_eq!(super::Aiff::CODEC_TYPE, CODEC_TYPE_PCM_S16BE);
     }
 }

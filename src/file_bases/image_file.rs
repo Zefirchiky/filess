@@ -15,6 +15,8 @@ pub enum ImageIoError {
 
 /// Trait for image files that can load/save [DynamicImage].
 pub trait ImageFile: FileTrait {
+    const FORMAT: image::ImageFormat;
+    
     /// Saves [DynamicImage] with default settings
     fn save_image(&self, img: &DynamicImage) -> Result<(), image::ImageError> {
         img.save(self)
@@ -26,7 +28,9 @@ pub trait ImageFile: FileTrait {
     }
 
     /// Returns the image format for encoding.
-    fn image_format() -> image::ImageFormat;
+    fn image_format(&self) -> image::ImageFormat {
+        Self::FORMAT
+    }
 }
 
 #[cfg(feature = "async")]

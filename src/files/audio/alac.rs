@@ -11,6 +11,6 @@ mod alac_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Alac::codec_type(), CODEC_TYPE_ALAC);
+        assert_eq!(super::Alac::CODEC_TYPE, CODEC_TYPE_ALAC);
     }
 }

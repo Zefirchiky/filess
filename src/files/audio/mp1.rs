@@ -16,6 +16,6 @@ mod mp1_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Mp1::codec_type(), CODEC_TYPE_MP1);
+        assert_eq!(super::Mp1::CODEC_TYPE, CODEC_TYPE_MP1);
     }
 }

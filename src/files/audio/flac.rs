@@ -11,6 +11,6 @@ mod flac_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Flac::codec_type(), CODEC_TYPE_FLAC);
+        assert_eq!(super::Flac::CODEC_TYPE, CODEC_TYPE_FLAC);
     }
 }

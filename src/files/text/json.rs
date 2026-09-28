@@ -109,7 +109,7 @@ mod json {
         // File doesn't exist yet, load should create it with Json::file_init_bytes()
         let loaded = handler.load().expect("Load failed on new file");
 
-        assert_eq!(loaded, Json::file_init_bytes().unwrap());
+        assert_eq!(loaded, Json::INIT_BYTES.unwrap());
         assert!(file_path.exists());
     }
 

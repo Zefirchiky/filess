@@ -3,7 +3,7 @@ macro_rules! define_file {
     (
         $name:ident,
         $ext_name:expr,
-        [$($mimo:expr),*],
+        [$($mime:expr),*],
         [$($ext:expr),*]
         $(,$init_bytes:expr)?
     ) => {
@@ -30,6 +30,11 @@ macro_rules! define_file {
         }
 
         impl FileTrait for $name {
+            const EXT: &[&str] = &[$($ext),*];
+            const EXT_NAME: &str = $ext_name;
+            const MIME: &[&str] = &[$($mime),*];
+            $( const INIT_BYTES: Option<&[u8]> = Some($init_bytes); )?
+            
             #[doc = concat!("Creates new ", stringify!($name), ".",
                 "\n\n#Panics")]
             fn try_new(path: impl AsRef<std::path::Path>) -> Result<Self, Self::TryNewError> {
@@ -39,23 +44,6 @@ macro_rules! define_file {
             fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
                 self.file.path = path.as_ref().into()
             }
-
-            #[doc = concat!("Returns the file extensions supported by ", stringify!($name), ".")]
-            fn ext() -> &'static [&'static str] {
-                &[$($ext),*]
-            }
-
-            fn ext_name() -> &'static str { $ext_name }
-            fn mime_type() -> &'static [&'static str] {
-                &[$($mimo),*]
-            }
-
-            $(
-                #[doc = concat!("Returns optional file initial bytes for ", stringify!($name), ".")]
-                fn file_init_bytes() -> Option<&'static [u8]> {
-                    return Some($init_bytes);
-                }
-            )?
         }
 
         impl AsRef<std::path::Path> for $name {
@@ -237,9 +225,7 @@ macro_rules! define_image_file {
         #[cfg(feature = "image")]
         const _: () = {
             impl $crate::traits::ImageFile for $name {
-                fn image_format() -> image::ImageFormat {
-                    $format
-                }
+                const FORMAT: image::ImageFormat = $format;
             }
         };
     };
@@ -273,7 +259,7 @@ macro_rules! define_audio_codecs_file {
         #[cfg(feature = "audio")]
         impl $crate::traits::AudioCodecsFile for $name {
             type Decoder = symphonia::default::codecs::$decoder;
-            fn codec_type() -> symphonia::core::codecs::CodecType { symphonia::core::codecs::$codecs_type }
+            const CODEC_TYPE: symphonia::core::codecs::CodecType = symphonia::core::codecs::$codecs_type;
         }
     };
 }

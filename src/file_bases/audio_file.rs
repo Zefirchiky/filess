@@ -171,7 +171,12 @@ pub trait AudioCodecsFile: AudioFile {
     type Decoder: Decoder;
 
     /// Returns the expected [CodecType](symphonia::core::codecs::CodecType).
-    fn codec_type() -> symphonia::core::codecs::CodecType;
+    const CODEC_TYPE: symphonia::core::codecs::CodecType;
+
+    /// Returns the expected [CodecType](symphonia::core::codecs::CodecType).
+    fn codec_type(&self) -> symphonia::core::codecs::CodecType {
+        Self::CODEC_TYPE
+    }
 
     /// Loads audio with enforced [Decoder]. [DecodedStream] will always be of this format
     fn load_audio(&self) -> Result<DecodedStream<Self, Self::Decoder>, AudioError> {

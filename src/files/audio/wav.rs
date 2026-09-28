@@ -27,6 +27,6 @@ mod wav_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Wav::codec_type(), CODEC_TYPE_PCM_S16LE);
+        assert_eq!(super::Wav::CODEC_TYPE, CODEC_TYPE_PCM_S16LE);
     }
 }

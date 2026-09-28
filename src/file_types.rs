@@ -83,6 +83,10 @@ pub enum ModelType {
 
 #[cfg(feature = "_any_model")]
 impl FileTrait for ModelType {
+    const EXT: &[&str] = &[];
+    const EXT_NAME: &str = "";
+    const MIME: &[&str] = &[];
+    
     fn _rename_file(&mut self, path: impl AsRef<std::path::Path>) {
         crate::match_self_1_arg!(self, _rename_file, path,
             "just_json" Json,
@@ -106,18 +110,6 @@ impl FileTrait for ModelType {
                 .unwrap_or_default();
             Self::TryNewError::WrongExtension(path.into(), ext)
         })
-    }
-
-    fn ext() -> &'static [&'static str] {
-        &[]
-    }
-
-    fn ext_name() -> &'static str {
-        ""
-    }
-
-    fn mime_type() -> &'static [&'static str] {
-        &[]
     }
 }
 
@@ -187,15 +179,15 @@ impl ModelType {
         let path_ref = path.as_ref();
         if let Some(ext) = path_ref.extension().and_then(|s| s.to_str()) {
             #[cfg(feature = "just_json")]
-            if crate::Json::ext().contains(&ext) {
+            if crate::Json::EXT.contains(&ext) {
                 return Some(Self::Json(crate::Json::new(path_ref)));
             }
             #[cfg(feature = "just_toml")]
-            if crate::Toml::ext().contains(&ext) {
+            if crate::Toml::EXT.contains(&ext) {
                 return Some(Self::Toml(crate::Toml::new(path_ref)));
             }
             #[cfg(feature = "just_ron")]
-            if crate::Ron::ext().contains(&ext) {
+            if crate::Ron::EXT.contains(&ext) {
                 return Some(Self::Ron(crate::Ron::new(path_ref)));
             }
         }
@@ -263,8 +255,25 @@ define_file_types!(
 
 #[cfg(feature = "image")]
 impl crate::traits::ImageFile for ImageTypes {
-    fn image_format() -> image::ImageFormat {
-        image::ImageFormat::Avif    // FIXME: Should somehow return based on current type
+    const FORMAT: image::ImageFormat = image::ImageFormat::Avif;
+    fn image_format(&self) -> image::ImageFormat {
+        use crate::match_self;
+
+        match_self!(self, image_format,
+            "jpeg" Jpeg,
+            "png"  Png,
+            "webp" WebP,
+            "gif"  Gif,
+            "bmp"  Bmp,
+            "exr"  Exr,
+            "ff"   Ff,
+            "hdr"  Hdr,
+            "ico"  Ico,
+            "pnm"  Pnm,
+            "qoi"  Qoi,
+            "tga"  Tga,
+            @Image,
+        )
     }
 }
 

@@ -36,6 +36,6 @@ mod mp3_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Mp3::codec_type(), CODEC_TYPE_MP3);
+        assert_eq!(super::Mp3::CODEC_TYPE, CODEC_TYPE_MP3);
     }
 }

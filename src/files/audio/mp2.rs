@@ -22,6 +22,6 @@ mod mp2_tests {
 
     #[test]
     fn codec_type() {
-        assert_eq!(super::Mp2::codec_type(), CODEC_TYPE_MP2);
+        assert_eq!(super::Mp2::CODEC_TYPE, CODEC_TYPE_MP2);
     }
 }

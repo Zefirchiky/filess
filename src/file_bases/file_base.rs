@@ -9,9 +9,9 @@ use crate::traits::FsElement;
 pub enum FileCreationError<F: FileTrait> {
     #[error("Extension should be a valid UTF-8")]
     InvalidUtf8(OsString),
-    #[error("Extension must be one of `{ext:?}` for file {0:?}, given: `{1}`", ext = F::ext())]
+    #[error("Extension must be one of `{ext:?}` for file {0:?}, given: `{1}`", ext = F::EXT)]
     WrongExtension(PathBuf, String),
-    #[error("Extension must be one of `{ext:?}` for file {0:?}, no extension given", ext = F::ext())]
+    #[error("Extension must be one of `{ext:?}` for file {0:?}, no extension given", ext = F::EXT)]
     NoExtension(PathBuf),
     #[error("Should be unreachable")]
     _Phantom(F)
@@ -41,11 +41,11 @@ impl<F: FileTrait> FileBase<F> {
     pub fn try_new(file: impl AsRef<Path>) -> Result<Self, F::TryNewError> {
         let file = file.as_ref().to_path_buf();
 
-        if !F::ext().is_empty() {
+        if !F::EXT.is_empty() {
             match file.extension() {
                 Some(ext) => {
                     let ext = ext.to_str().ok_or(F::TryNewError::InvalidUtf8(ext.to_owned()))?;
-                    if !F::ext().contains(&ext) {
+                    if !F::EXT.contains(&ext) {
                         return Err(F::TryNewError::WrongExtension(file.clone(), ext.into()));
                     }
                 }
@@ -118,6 +118,15 @@ impl<H: FileTrait> DerefMut for FileBase<H> {
 ///
 /// Provides file I/O, path validation, extension checks, and optional [infer].
 pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
+    /// Possible file extension that will be forced
+    const EXT: &[&str];
+    /// Human-readable name for the extension
+    const EXT_NAME: &str;
+    /// MIME types associated with this file type
+    const MIME: &[&str];
+    /// Initial file bytes, if needed
+    const INIT_BYTES: Option<&[u8]> = None;
+    
     fn new(path: impl AsRef<Path>) -> Self {
         <Self as FileTrait>::try_new(path).unwrap()
     }
@@ -128,15 +137,21 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     /// Different from [FsElement::rename] in that it does NOT change file or dir in the file system
     fn _rename_file(&mut self, path: impl AsRef<Path>);
     /// Initial file bytes, if needed
-    fn file_init_bytes() -> Option<&'static [u8]> {
-        None
+    fn file_init_bytes(&self) -> Option<&'static [u8]> {
+        Self::INIT_BYTES
     }
     /// Possible file extension that will be forced
-    fn ext() -> &'static [&'static str];
+    fn possible_ext(&self) -> &'static [&'static str] {
+        Self::EXT
+    }
     /// Human-readable name for the extension
-    fn ext_name() -> &'static str;
+    fn file_ext_name(&self) -> &'static str {
+        Self::EXT_NAME
+    }
     /// MIME types associated with this file type
-    fn mime_type() -> &'static [&'static str];
+    fn possible_mime_types(&self) -> &'static [&'static str] {
+        Self::MIME
+    }
 
     /// Returns [std::fs::File] for this file
     fn as_file(&self) -> std::io::Result<fs::File> {
@@ -174,7 +189,7 @@ pub trait FileTrait: FsElement<TryNewError = FileCreationError<Self>> {
     #[cfg(feature = "infer")]
     fn is_correct_data(&self) -> std::io::Result<bool> {
         if let Some(t) = self.infer()? {
-            Ok(Self::ext().contains(&t.extension()))
+            Ok(Self::EXT.contains(&t.extension()))
         } else {
             Ok(false)
         }
@@ -212,7 +227,7 @@ impl<T: FileTrait> FsElement for T {
             create_dir_all(parent)?
         }
 
-        match Self::file_init_bytes() {
+        match Self::INIT_BYTES {
             Some(b) => fs::write(self, b)?,
             None => {
                 fs::File::create(self)?;
@@ -245,7 +260,7 @@ impl<T: FileTrait> crate::traits::AsyncFsElement for T {
             fs::create_dir_all(parent).await?
         }
 
-        match Self::file_init_bytes() {
+        match Self::INIT_BYTES {
             Some(b) => fs::write(self, b).await?,
             None => {
                 fs::File::create(self).await?;
@@ -293,7 +308,7 @@ pub trait AsyncFileTrait: FileTrait + crate::traits::AsyncFsElement {
     #[cfg(feature = "infer")]
     async fn ais_correct_data(&self) -> std::io::Result<bool> {
         if let Some(t) = self.ainfer().await? {
-            Ok(Self::ext().contains(&t.extension()))
+            Ok(Self::EXT.contains(&t.extension()))
         } else {
             Ok(false)
         }
