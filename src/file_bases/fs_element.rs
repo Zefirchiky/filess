@@ -24,6 +24,18 @@ pub trait FsElement: FsElementBoundaries {
     }
     /// Creates new file or dir
     fn try_new(path: impl AsRef<Path>) -> Result<Self, Self::TryNewError>;
+
+    /// Creates new temporary file or dir
+    /// 
+    /// Panics at error
+    fn new_temp(path: impl AsRef<Path>) -> Temporary<Self> {
+        Self::new(path).to_temp()
+    }
+
+    /// Creates new temporary file or dir
+    fn try_new_temp(path: impl AsRef<Path>) -> Result<Temporary<Self>, Self::TryNewError> {
+        Ok(Self::try_new(path)?.to_temp())
+    }
     
     /// Creates file or dir in file system
     fn create(&self) -> std::io::Result<()>;
@@ -62,7 +74,7 @@ pub trait FsElement: FsElementBoundaries {
     /// Transforms file into `Temporary`
     /// 
     /// File will be deleted at drop
-    fn as_temp(self) -> Temporary<Self> {
+    fn to_temp(self) -> Temporary<Self> {
         Temporary::new(self)
     }
 }
@@ -85,6 +97,11 @@ pub trait AsyncFsElement: FsElement {
     async fn arename(&self, dst: impl AsRef<Path> + Sync + Send) -> std::io::Result<Self> {
         tokio::fs::rename(self, &dst).await?;
         Ok(Self::new(dst))
+    }
+
+    /// Makes current element [Temporary](crate::Temporary)
+    fn to_temp(self) -> crate::Temporary<Self> {
+        crate::Temporary::new(self)
     }
 }
 

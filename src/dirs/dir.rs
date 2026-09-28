@@ -125,6 +125,11 @@ impl Dir {
         <Dir as FsElement>::try_new(path)
     }
 
+    /// Creates a [Dir] from OS's temporary directory
+    pub fn temp_dir() -> Dir {
+        std::env::temp_dir().into()
+    }
+
     /// Walks through dir with [walkdir].
     ///
     /// ```ignore
