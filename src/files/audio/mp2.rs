@@ -14,14 +14,3 @@ define_file!(
 );
 define_audio_file!(Mp2, MpaReader);
 define_audio_codecs_file!(Mp2, MpaDecoder, CODEC_TYPE_MP2);
-
-#[cfg(all(test, feature = "audio"))]
-mod mp2_tests {
-    use crate::traits::AudioCodecsFile;
-    use symphonia::core::codecs::CODEC_TYPE_MP2;
-
-    #[test]
-    fn codec_type() {
-        assert_eq!(super::Mp2::CODEC_TYPE, CODEC_TYPE_MP2);
-    }
-}

@@ -121,4 +121,15 @@ pub(crate) mod test_assets {
         pub name: String,
         pub age: usize,
     }
+
+    /// Unique temp path carrying a valid extension for `F`, used by the macro-generated tests.
+    #[cfg(feature = "audio")]
+    pub(crate) fn audio_test_path<F: crate::traits::FileTrait>(name: &str) -> std::path::PathBuf {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let ext = F::EXT.first().copied().unwrap_or("bin");
+        std::env::temp_dir().join(format!("filess_audio_{}_{}.{}", name, now, ext))
+    }
 }

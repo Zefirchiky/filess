@@ -17,14 +17,3 @@ define_file!(
 );
 define_audio_file!(Aiff, AiffReader);
 define_audio_codecs_file!(Aiff, PcmDecoder, CODEC_TYPE_PCM_S16BE);
-
-#[cfg(all(test, feature = "audio"))]
-mod aiff_tests {
-    use crate::traits::AudioCodecsFile;
-    use symphonia::core::codecs::CODEC_TYPE_PCM_S16BE;
-
-    #[test]
-    fn codec_type() {
-        assert_eq!(super::Aiff::CODEC_TYPE, CODEC_TYPE_PCM_S16BE);
-    }
-}

@@ -110,7 +110,7 @@ macro_rules! define_file {
 
             fn __base(label: &str) -> PathBuf {
                 let dir = std::env::temp_dir().join("filess_auto_test");
-                let exts = <$name as FileTrait>::ext();
+                let exts = <$name as FileTrait>::EXT;
                 if exts.is_empty() {
                     dir.join(label)
                 } else if exts[0].is_empty() {
@@ -124,8 +124,8 @@ macro_rules! define_file {
             #[test]
             fn ext_non_empty() {
                 // Fallback types like File/Image accept any path and have no extensions
-                if <$name as FileTrait>::ext().is_empty() { return; }
-                assert!(!<$name as FileTrait>::ext().is_empty());
+                if <$name as FileTrait>::EXT.is_empty() { return; }
+                assert!(!<$name as FileTrait>::EXT.is_empty());
             }
 
             #[test]
@@ -135,7 +135,7 @@ macro_rules! define_file {
 
             #[test]
             fn try_new_invalid_extension() {
-                if <$name as FileTrait>::ext().is_empty() { return; }
+                if <$name as FileTrait>::EXT.is_empty() { return; }
                 let err = <$name as FileTrait>::try_new("data.invalid").unwrap_err();
                 let msg = err.to_string();
                 assert!(msg.contains("invalid") || msg.contains("no extension") || msg.contains("UTF-8"));
@@ -250,6 +250,45 @@ macro_rules! define_audio_file {
         impl $crate::traits::AudioFile for $name {
             type Reader = symphonia::default::formats::$reader;
         }
+
+        #[cfg(all(test, feature = "audio"))]
+        #[allow(non_snake_case)]
+        mod __audio_reader_tests {
+            use super::*;
+            use $crate::test_assets::audio_test_path;
+            use $crate::traits::{AudioFile, FileTrait};
+
+            // Compile-time guarantee that the wired reader is usable by symphonia
+            fn __assert_reader<R: symphonia::core::formats::FormatReader>() {}
+
+            #[test]
+            fn reader_is_format_reader() {
+                __assert_reader::<<$name as AudioFile>::Reader>();
+            }
+
+            #[test]
+            fn missing_file_errors() {
+                let p = audio_test_path::<$name>("missing");
+                let _ = std::fs::remove_file(&p);
+                assert!(
+                    <$name as AudioFile>::load_audio_decoded_stream_params(&$name::new(&p)).is_err(),
+                    "{}: missing file must not yield a stream",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn garbage_data_errors() {
+                let p = audio_test_path::<$name>("garbage");
+                let f = $crate::Temporary::new($name::new(&p));
+                f.save(b"definitely not audio data").unwrap();
+                assert!(
+                    <$name as AudioFile>::load_audio_decoded_stream_params(&f).is_err(),
+                    "{}: garbage data must not yield a stream",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+        }
     };
 }
 
@@ -261,6 +300,71 @@ macro_rules! define_audio_codecs_file {
             type Decoder = symphonia::default::codecs::$decoder;
             const CODEC_TYPE: symphonia::core::codecs::CodecType = symphonia::core::codecs::$codecs_type;
         }
+
+        #[cfg(all(test, feature = "audio"))]
+        #[allow(non_snake_case)]
+        mod __audio_codecs_tests {
+            use super::*;
+            use $crate::test_assets::audio_test_path;
+            use $crate::traits::{AudioCodecsFile, FileTrait};
+            use symphonia::core::codecs::{CODEC_TYPE_NULL, CodecParameters, Decoder};
+
+            #[test]
+            fn codec_type_is_wired() {
+                assert_eq!(<$name as AudioCodecsFile>::CODEC_TYPE, symphonia::core::codecs::$codecs_type);
+                assert_ne!(
+                    <$name as AudioCodecsFile>::CODEC_TYPE,
+                    CODEC_TYPE_NULL,
+                    "{}: codec type must be a real one",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn codec_type_method_matches_const() {
+                assert_eq!($name::new(audio_test_path::<$name>("codec")).codec_type(), <$name as AudioCodecsFile>::CODEC_TYPE);
+            }
+
+            #[test]
+            fn decoder_supports_declared_codec() {
+                let supported = <symphonia::default::codecs::$decoder as Decoder>::supported_codecs();
+                assert!(
+                    supported.iter().any(|d| d.codec == <$name as AudioCodecsFile>::CODEC_TYPE),
+                    "{}: decoder does not declare support for its own codec type",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn decoder_rejects_null_codec() {
+                let mut params = CodecParameters::new();
+                params.for_codec(CODEC_TYPE_NULL);
+                assert!(
+                    <symphonia::default::codecs::$decoder as Decoder>::try_new(&params, &Default::default()).is_err(),
+                    "{}: decoder accepted a null codec type",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn load_audio_errors_on_garbage() {
+                let p = audio_test_path::<$name>("garbage");
+                let f = $crate::Temporary::new($name::new(&p));
+                f.save(b"definitely not audio data").unwrap();
+                assert!(
+                    <$name as AudioCodecsFile>::load_audio(&f).is_err(),
+                    "{}: garbage data must not decode",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn load_audio_errors_on_missing_file() {
+                let p = audio_test_path::<$name>("missing");
+                let _ = std::fs::remove_file(&p);
+                assert!(<$name as AudioCodecsFile>::load_audio(&$name::new(&p)).is_err());
+            }
+        }
     };
 }
 
@@ -269,6 +373,41 @@ macro_rules! define_audio_container_file {
     ($name:ident) => {
         #[cfg(feature = "audio")]
         impl $crate::traits::AudioContainerFile for $name {}
+
+        #[cfg(all(test, feature = "audio"))]
+        #[allow(non_snake_case)]
+        mod __audio_container_tests {
+            use super::*;
+            use $crate::test_assets::audio_test_path;
+            use $crate::traits::{AudioContainerFile, FileTrait};
+
+            // Compile-time guarantee that the type picks the dynamic-decoder path
+            fn __assert_container<T: AudioContainerFile>() {}
+
+            #[test]
+            fn is_audio_container_file() {
+                __assert_container::<$name>();
+            }
+
+            #[test]
+            fn load_audio_errors_on_garbage() {
+                let p = audio_test_path::<$name>("garbage");
+                let f = $crate::Temporary::new($name::new(&p));
+                f.save(b"definitely not audio data").unwrap();
+                assert!(
+                    <$name as AudioContainerFile>::load_audio(&f).is_err(),
+                    "{}: garbage data must not decode",
+                    <$name as FileTrait>::EXT_NAME
+                );
+            }
+
+            #[test]
+            fn load_audio_errors_on_missing_file() {
+                let p = audio_test_path::<$name>("missing");
+                let _ = std::fs::remove_file(&p);
+                assert!(<$name as AudioContainerFile>::load_audio(&$name::new(&p)).is_err());
+            }
+        }
     };
 }
 
